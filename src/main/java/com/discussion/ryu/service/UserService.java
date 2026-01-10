@@ -12,12 +12,12 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
-    @Transactional
     public void signup(UserSignUpDto userSignUpDto) {
         if (userRepository.existsByUsername(userSignUpDto.getUsername())) {
             throw new IllegalArgumentException("이미 존재하는 아이디입니다.");
