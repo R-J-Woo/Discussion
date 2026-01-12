@@ -1,5 +1,6 @@
 package com.discussion.ryu.service;
 
+import com.discussion.ryu.config.JwtTokenProvider;
 import com.discussion.ryu.dto.user.UserLoginDto;
 import com.discussion.ryu.dto.user.UserSignUpDto;
 import com.discussion.ryu.entity.AuthProvider;
@@ -17,6 +18,7 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final JwtTokenProvider jwtTokenProvider;
 
     public void signup(UserSignUpDto userSignUpDto) {
         if (userRepository.existsByUsername(userSignUpDto.getUsername())) {
@@ -48,7 +50,6 @@ public class UserService {
             throw new IllegalArgumentException("아이디 또는 비밀번호가 틀렸습니다.");
         }
 
-        String token = "loginToken";
-        return token;
+        return jwtTokenProvider.createToken(user.getUserId(), user.getUsername());
     }
 }
