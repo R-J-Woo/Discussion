@@ -30,7 +30,6 @@ public class JwtTokenProvider {
     public String createToken(Long userId, String username) {
         return Jwts.builder()
                 .setSubject(username)
-                .claim("userId", userId)
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + EXPIRATION))
                 .signWith(key, SignatureAlgorithm.HS256)

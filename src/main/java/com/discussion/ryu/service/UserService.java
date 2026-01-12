@@ -2,6 +2,7 @@ package com.discussion.ryu.service;
 
 import com.discussion.ryu.config.JwtTokenProvider;
 import com.discussion.ryu.dto.user.UserLoginDto;
+import com.discussion.ryu.dto.user.UserMeResponse;
 import com.discussion.ryu.dto.user.UserSignUpDto;
 import com.discussion.ryu.entity.AuthProvider;
 import com.discussion.ryu.entity.User;
@@ -51,5 +52,20 @@ public class UserService {
         }
 
         return jwtTokenProvider.createToken(user.getUserId(), user.getUsername());
+    }
+
+    public UserMeResponse getMyInfo(User user) {
+        User myUser = userRepository.findByUsername(user.getUsername())
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+
+        return new UserMeResponse(
+                myUser.getUsername(),
+                myUser.getName(),
+                myUser.getEmail(),
+                myUser.getGrade(),
+                myUser.getCreated_at(),
+                myUser.getUpdated_at(),
+                myUser.getDeleted_at()
+        );
     }
 }

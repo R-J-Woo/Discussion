@@ -59,6 +59,9 @@ public class User implements UserDetails {
     @UpdateTimestamp
     private ZonedDateTime updated_at;
 
+    @Column
+    private ZonedDateTime deleted_at;
+
     public User(String username, String password, String name, String email, String grade, AuthProvider provider, String providerId) {
         this.username = username;
         this.password = password;
@@ -81,7 +84,7 @@ public class User implements UserDetails {
 
     @Override
     public String getUsername() {
-        return userId.toString();
+        return this.username;
     }
 
     @Override
