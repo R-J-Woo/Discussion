@@ -1,8 +1,9 @@
 package com.discussion.ryu.service;
 
 import com.discussion.ryu.config.JwtTokenProvider;
+import com.discussion.ryu.dto.user.UpdateUserInfoDto;
 import com.discussion.ryu.dto.user.UserLoginDto;
-import com.discussion.ryu.dto.user.UserMeResponse;
+import com.discussion.ryu.dto.user.UserInfoResponse;
 import com.discussion.ryu.dto.user.UserSignUpDto;
 import com.discussion.ryu.entity.AuthProvider;
 import com.discussion.ryu.entity.User;
@@ -30,16 +31,14 @@ public class UserService {
             throw new IllegalArgumentException("이미 존재하는 닉네임입니다.");
         }
 
-        User user = new User(
-                userSignUpDto.getUsername(),
-                passwordEncoder.encode(userSignUpDto.getPassword()),
-                userSignUpDto.getName(),
-                userSignUpDto.getEmail(),
-                "일반",
-                AuthProvider.LOCAL,
-                userSignUpDto.getUsername()
-        );
-
+        User user = new User();
+        user.setUsername(userSignUpDto.getUsername());
+        user.setPassword(passwordEncoder.encode(userSignUpDto.getPassword()));
+        user.setName(userSignUpDto.getName());
+        user.setEmail(userSignUpDto.getEmail());
+        user.setGrade("일반");
+        user.setProvider(AuthProvider.LOCAL);
+        user.setProviderId(userSignUpDto.getUsername());
         userRepository.save(user);
     }
 
@@ -54,18 +53,25 @@ public class UserService {
         return jwtTokenProvider.createToken(user.getUserId(), user.getUsername());
     }
 
-    public UserMeResponse getMyInfo(User user) {
+    public UserInfoResponse getMyInfo(User user) {
         User myUser = userRepository.findByUsername(user.getUsername())
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
 
-        return new UserMeResponse(
-                myUser.getUsername(),
-                myUser.getName(),
-                myUser.getEmail(),
-                myUser.getGrade(),
-                myUser.getCreated_at(),
-                myUser.getUpdated_at(),
-                myUser.getDeleted_at()
-        );
+        return UserInfoResponse.from(myUser);
+    }
+
+    public UserInfoResponse updateMyInfo(User user, UpdateUserInfoDto updateUserInfoDto) {
+        User myUser = userRepository.findByUsername(user.getUsername())
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+
+        if (userRepository.existsByName(updateUserInfoDto.getName())) {
+            throw new IllegalArgumentException("이미 존재하는 닉네임입니다.");
+        }
+
+        myUser.setName(updateUserInfoDto.getName());
+        myUser.setEmail(updateUserInfoDto.getEmail());
+        userRepository.save(myUser);
+
+        return UserInfoResponse.from(myUser);
     }
 }

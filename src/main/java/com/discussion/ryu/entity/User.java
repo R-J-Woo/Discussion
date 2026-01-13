@@ -1,10 +1,7 @@
 package com.discussion.ryu.entity;
 
 import jakarta.persistence.*;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 import org.springframework.security.core.GrantedAuthority;
@@ -22,8 +19,8 @@ import java.util.List;
                 @UniqueConstraint(columnNames = {"provider", "providerId"})
         }
 )
-@Getter
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Data
+@NoArgsConstructor
 public class User implements UserDetails {
 
     @Id
@@ -61,16 +58,6 @@ public class User implements UserDetails {
 
     @Column
     private ZonedDateTime deleted_at;
-
-    public User(String username, String password, String name, String email, String grade, AuthProvider provider, String providerId) {
-        this.username = username;
-        this.password = password;
-        this.name = name;
-        this.email = email;
-        this.grade = grade;
-        this.provider = provider;
-        this.providerId = providerId;
-    }
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
