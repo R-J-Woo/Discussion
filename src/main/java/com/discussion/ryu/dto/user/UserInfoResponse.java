@@ -9,9 +9,8 @@ public record UserInfoResponse(
     String name,
     String email,
     String grade,
-    ZonedDateTime created_at,
-    ZonedDateTime updated_at,
-    ZonedDateTime deleted_at
+    ZonedDateTime createdAt,
+    ZonedDateTime updatedAt
 ) {
     public static UserInfoResponse from(User user) {
         return new UserInfoResponse(
@@ -19,9 +18,8 @@ public record UserInfoResponse(
                 user.getName(),
                 user.getEmail(),
                 user.getGrade(),
-                user.getCreated_at(),
-                user.getUpdated_at(),
-                user.getDeleted_at()
+                user.getCreatedAt(),
+                user.getUpdatedAt()
         );
     }
 }

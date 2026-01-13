@@ -47,18 +47,18 @@ public class UserController {
 
     // 비밀번호 변경
     @PutMapping("/me/password")
-    public ResponseEntity<UserInfoResponse> updatePassword(
+    public ResponseEntity<String> updatePassword(
             @AuthenticationPrincipal User user,
             @Valid @RequestBody UpdateUserPasswordDto updateUserPasswordDto
     ) {
-        UserInfoResponse userInfoResponse = userService.updatePassword(user, updateUserPasswordDto);
-        return ResponseEntity.ok(userInfoResponse);
+        userService.updatePassword(user, updateUserPasswordDto);
+        return ResponseEntity.ok("비밀번호가 변경되었습니다.");
     }
 
-//    // 사용자 탈퇴
-//    @PutMapping("/me")
-//    public ResponseEntity<UserInfoResponse> deleteMyInfo(@AuthenticationPrincipal User user) {
-//        UserInfoResponse userInfoResponse = userService.getMyInfo(user);
-//        return ResponseEntity.ok(userInfoResponse);
-//    }
+    // 사용자 탈퇴
+    @DeleteMapping("/me")
+    public ResponseEntity<String> deleteMyInfo(@AuthenticationPrincipal User user) {
+        userService.deleteMyInfo(user);
+        return ResponseEntity.ok("사용자 탈퇴가 완료되었습니다.");
+    }
 }

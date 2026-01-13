@@ -10,6 +10,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.ZonedDateTime;
+
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -51,33 +53,26 @@ public class UserService {
     }
 
     public UserInfoResponse getMyInfo(User user) {
-        User myUser = userRepository.findByUsername(user.getUsername())
-                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
-
-        return UserInfoResponse.from(myUser);
+        return UserInfoResponse.from(user);
     }
 
     public UserInfoResponse updateMyInfo(User user, UpdateUserInfoDto updateUserInfoDto) {
-        User myUser = userRepository.findByUsername(user.getUsername())
-                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
 
         if (userRepository.existsByName(updateUserInfoDto.getName())) {
             throw new IllegalArgumentException("이미 존재하는 닉네임입니다.");
         }
 
-        myUser.setName(updateUserInfoDto.getName());
-        myUser.setEmail(updateUserInfoDto.getEmail());
-        userRepository.save(myUser);
+        user.setName(updateUserInfoDto.getName());
+        user.setEmail(updateUserInfoDto.getEmail());
+        userRepository.save(user);
 
-        return UserInfoResponse.from(myUser);
+        return UserInfoResponse.from(user);
     }
 
-    public UserInfoResponse updatePassword(User user, UpdateUserPasswordDto updateUserPasswordDto) {
-        User myUser = userRepository.findByUsername(user.getUsername())
-                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+    public void updatePassword(User user, UpdateUserPasswordDto updateUserPasswordDto) {
 
         // 현재 비밀번호 일치 확인
-        if (!passwordEncoder.matches(updateUserPasswordDto.getCurrentPassword(), myUser.getPassword())) {
+        if (!passwordEncoder.matches(updateUserPasswordDto.getCurrentPassword(), user.getPassword())) {
             throw new IllegalArgumentException("현재 비밀번호가 일치하지 않습니다.");
         }
 
@@ -87,13 +82,19 @@ public class UserService {
         }
 
         // 기존 비밀번호와 새 비밀번호가 동일한지 확인
-        if (passwordEncoder.matches(updateUserPasswordDto.getNewPassword(), myUser.getPassword())) {
+        if (passwordEncoder.matches(updateUserPasswordDto.getNewPassword(), user.getPassword())) {
             throw new IllegalArgumentException("기존 비밀번호와 다른 비밀번호를 사용해주세요.");
         }
 
-        myUser.setPassword(passwordEncoder.encode(updateUserPasswordDto.getNewPassword()));
-        userRepository.save(myUser);
+        user.setPassword(passwordEncoder.encode(updateUserPasswordDto.getNewPassword()));
+        userRepository.save(user);
+    }
 
-        return UserInfoResponse.from(myUser);
+    public void deleteMyInfo(User user) {
+        if (user.isDeleted()) {
+            throw new IllegalArgumentException("이미 탈퇴한 사용자입니다.");
+        }
+
+        userRepository.delete(user);
     }
 }

@@ -1,9 +1,9 @@
 package com.discussion.ryu.entity;
 
 import jakarta.persistence.*;
+import jakarta.persistence.Table;
 import lombok.*;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
+import org.hibernate.annotations.*;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
@@ -19,8 +19,10 @@ import java.util.List;
                 @UniqueConstraint(columnNames = {"provider", "providerId"})
         }
 )
-@Data
+@Getter @Setter
 @NoArgsConstructor
+@SQLDelete(sql = "UPDATE users SET is_deleted = true WHERE user_id = ?")
+@SQLRestriction("is_deleted = false")
 public class User implements UserDetails {
 
     @Id
@@ -49,15 +51,20 @@ public class User implements UserDetails {
     @Column(nullable = false)
     private String providerId;
 
+    @Column
+    private boolean isDeleted;
+
     @CreationTimestamp
     @Column(nullable = false)
-    private ZonedDateTime created_at;
+    private ZonedDateTime createdAt;
 
     @UpdateTimestamp
-    private ZonedDateTime updated_at;
+    private ZonedDateTime updatedAt;
 
-    @Column
-    private ZonedDateTime deleted_at;
+    @PrePersist
+    protected void onCreate() {
+        isDeleted = false;
+    }
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
