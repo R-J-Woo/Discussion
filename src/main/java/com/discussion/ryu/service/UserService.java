@@ -1,10 +1,7 @@
 package com.discussion.ryu.service;
 
 import com.discussion.ryu.config.JwtTokenProvider;
-import com.discussion.ryu.dto.user.UpdateUserInfoDto;
-import com.discussion.ryu.dto.user.UserLoginDto;
-import com.discussion.ryu.dto.user.UserInfoResponse;
-import com.discussion.ryu.dto.user.UserSignUpDto;
+import com.discussion.ryu.dto.user.*;
 import com.discussion.ryu.entity.AuthProvider;
 import com.discussion.ryu.entity.User;
 import com.discussion.ryu.repository.UserRepository;
@@ -70,6 +67,31 @@ public class UserService {
 
         myUser.setName(updateUserInfoDto.getName());
         myUser.setEmail(updateUserInfoDto.getEmail());
+        userRepository.save(myUser);
+
+        return UserInfoResponse.from(myUser);
+    }
+
+    public UserInfoResponse updatePassword(User user, UpdateUserPasswordDto updateUserPasswordDto) {
+        User myUser = userRepository.findByUsername(user.getUsername())
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+
+        // 현재 비밀번호 일치 확인
+        if (!passwordEncoder.matches(updateUserPasswordDto.getCurrentPassword(), myUser.getPassword())) {
+            throw new IllegalArgumentException("현재 비밀번호가 일치하지 않습니다.");
+        }
+
+        // 새 비밀번호 일치 확인
+        if (!updateUserPasswordDto.getNewPassword().equals(updateUserPasswordDto.getNewPasswordConfirm())) {
+            throw new IllegalArgumentException("새 비밀번호가 서로 일치하지 않습니다.");
+        }
+
+        // 기존 비밀번호와 새 비밀번호가 동일한지 확인
+        if (passwordEncoder.matches(updateUserPasswordDto.getNewPassword(), myUser.getPassword())) {
+            throw new IllegalArgumentException("기존 비밀번호와 다른 비밀번호를 사용해주세요.");
+        }
+
+        myUser.setPassword(passwordEncoder.encode(updateUserPasswordDto.getNewPassword()));
         userRepository.save(myUser);
 
         return UserInfoResponse.from(myUser);

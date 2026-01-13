@@ -1,9 +1,6 @@
 package com.discussion.ryu.controller;
 
-import com.discussion.ryu.dto.user.UpdateUserInfoDto;
-import com.discussion.ryu.dto.user.UserLoginDto;
-import com.discussion.ryu.dto.user.UserInfoResponse;
-import com.discussion.ryu.dto.user.UserSignUpDto;
+import com.discussion.ryu.dto.user.*;
 import com.discussion.ryu.entity.User;
 import com.discussion.ryu.service.UserService;
 import jakarta.validation.Valid;
@@ -49,12 +46,15 @@ public class UserController {
     }
 
     // 비밀번호 변경
-//    @PutMapping("/reissue")
-//    public ResponseEntity<UserInfoResponse> updatePassword(@AuthenticationPrincipal User user) {
-//        UserInfoResponse userInfoResponse = userService.getMyInfo(user);
-//        return ResponseEntity.ok(userInfoResponse);
-//    }
-//
+    @PutMapping("/me/password")
+    public ResponseEntity<UserInfoResponse> updatePassword(
+            @AuthenticationPrincipal User user,
+            @Valid @RequestBody UpdateUserPasswordDto updateUserPasswordDto
+    ) {
+        UserInfoResponse userInfoResponse = userService.updatePassword(user, updateUserPasswordDto);
+        return ResponseEntity.ok(userInfoResponse);
+    }
+
 //    // 사용자 탈퇴
 //    @PutMapping("/me")
 //    public ResponseEntity<UserInfoResponse> deleteMyInfo(@AuthenticationPrincipal User user) {
