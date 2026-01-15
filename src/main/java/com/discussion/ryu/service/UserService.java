@@ -91,7 +91,7 @@ public class UserService {
     }
 
     public void deleteMyInfo(User user) {
-        if (user.isDeleted()) {
+        if (user.getDeletedAt() != null) {
             throw new IllegalArgumentException("이미 탈퇴한 사용자입니다.");
         }
 

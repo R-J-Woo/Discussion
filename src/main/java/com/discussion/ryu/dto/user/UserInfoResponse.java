@@ -2,6 +2,7 @@ package com.discussion.ryu.dto.user;
 
 import com.discussion.ryu.entity.User;
 
+import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
 
 public record UserInfoResponse(
@@ -9,8 +10,8 @@ public record UserInfoResponse(
     String name,
     String email,
     String grade,
-    ZonedDateTime createdAt,
-    ZonedDateTime updatedAt
+    LocalDateTime createdAt,
+    LocalDateTime updatedAt
 ) {
     public static UserInfoResponse from(User user) {
         return new UserInfoResponse(

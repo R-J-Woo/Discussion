@@ -7,6 +7,7 @@ import org.hibernate.annotations.*;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
 import java.util.Collection;
@@ -16,29 +17,32 @@ import java.util.List;
 @Table(
         name = "users",
         uniqueConstraints = {
-                @UniqueConstraint(columnNames = {"provider", "providerId"})
+                @UniqueConstraint(columnNames = {"username", "deleted_at"}),
+                @UniqueConstraint(columnNames = {"email", "deleted_at"}),
+                @UniqueConstraint(columnNames = {"name", "deleted_at"}),
+                @UniqueConstraint(columnNames = {"provider", "provider_id", "deleted_at"})
         }
 )
 @Getter @Setter
 @NoArgsConstructor
-@SQLDelete(sql = "UPDATE users SET is_deleted = true WHERE user_id = ?")
-@SQLRestriction("is_deleted = false")
+@SQLDelete(sql = "UPDATE users SET deleted_at = NOW() WHERE user_id = ?")
+@SQLRestriction("deleted_at IS NULL")
 public class User implements UserDetails {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long userId;
 
-    @Column(unique = true)
+    @Column
     private String username;
 
     @Column
     private String password;
 
-    @Column(unique = true, nullable = false)
+    @Column(nullable = false)
     private String name;
 
-    @Column(unique = true)
+    @Column
     private String email;
 
     @Column
@@ -51,20 +55,15 @@ public class User implements UserDetails {
     @Column(nullable = false)
     private String providerId;
 
-    @Column
-    private boolean isDeleted;
-
     @CreationTimestamp
-    @Column(nullable = false)
-    private ZonedDateTime createdAt;
+    @Column(nullable = false, updatable = false)
+    private LocalDateTime createdAt;
 
     @UpdateTimestamp
-    private ZonedDateTime updatedAt;
+    private LocalDateTime updatedAt;
 
-    @PrePersist
-    protected void onCreate() {
-        isDeleted = false;
-    }
+    @Column
+    private LocalDateTime deletedAt;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
@@ -98,6 +97,6 @@ public class User implements UserDetails {
 
     @Override
     public boolean isEnabled() {
-        return true;
+        return deletedAt == null;
     }
 }
