@@ -4,6 +4,7 @@ import com.discussion.ryu.config.JwtTokenProvider;
 import com.discussion.ryu.dto.user.*;
 import com.discussion.ryu.entity.AuthProvider;
 import com.discussion.ryu.entity.User;
+import com.discussion.ryu.exception.*;
 import com.discussion.ryu.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -24,11 +25,11 @@ public class UserService {
     @Transactional
     public void signup(UserSignUpDto userSignUpDto) {
         if (userRepository.existsByUsername(userSignUpDto.getUsername())) {
-            throw new IllegalArgumentException("이미 존재하는 아이디입니다.");
+            throw new DuplicateUsernameException("이미 존재하는 아이디입니다.");
         }
 
         if (userRepository.existsByName(userSignUpDto.getName())) {
-            throw new IllegalArgumentException("이미 존재하는 닉네임입니다.");
+            throw new DuplicateNameException("이미 존재하는 닉네임입니다.");
         }
 
         User user = new User();
@@ -43,10 +44,10 @@ public class UserService {
 
     public String login(UserLoginDto userLoginDto) {
         User user = userRepository.findByUsername(userLoginDto.getUsername())
-                .orElseThrow(() -> new IllegalArgumentException("아이디 또는 비밀번호가 틀렸습니다."));
+                .orElseThrow(() -> new AuthenticationFailedException("아이디 또는 비밀번호가 틀렸습니다."));
 
         if (!passwordEncoder.matches(userLoginDto.getPassword(), user.getPassword())) {
-            throw new IllegalArgumentException("아이디 또는 비밀번호가 틀렸습니다.");
+            throw new AuthenticationFailedException("아이디 또는 비밀번호가 틀렸습니다.");
         }
 
         return jwtTokenProvider.createToken(user.getUserId(), user.getUsername());
@@ -60,11 +61,11 @@ public class UserService {
     public UserInfoResponse updateMyInfo(User user, UpdateUserInfoDto updateUserInfoDto) {
 
         if (userRepository.existsByNameAndUserIdNot(updateUserInfoDto.getName(), user.getUserId())) {
-            throw new IllegalArgumentException("이미 존재하는 닉네임입니다.");
+            throw new DuplicateNameException("이미 존재하는 닉네임입니다.");
         }
 
         if (userRepository.existsByEmailAndUserIdNot(updateUserInfoDto.getEmail(), user.getUserId())) {
-            throw new IllegalArgumentException("이미 존재하는 이메일입니다.");
+            throw new DuplicateEmailException("이미 존재하는 이메일입니다.");
         }
 
         user.setName(updateUserInfoDto.getName());
@@ -79,17 +80,17 @@ public class UserService {
 
         // 현재 비밀번호 일치 확인
         if (!passwordEncoder.matches(updateUserPasswordDto.getCurrentPassword(), user.getPassword())) {
-            throw new IllegalArgumentException("현재 비밀번호가 일치하지 않습니다.");
+            throw new InvalidCurrentPasswordException("현재 비밀번호가 일치하지 않습니다.");
         }
 
         // 새 비밀번호 일치 확인
         if (!updateUserPasswordDto.getNewPassword().equals(updateUserPasswordDto.getNewPasswordConfirm())) {
-            throw new IllegalArgumentException("새 비밀번호가 서로 일치하지 않습니다.");
+            throw new PasswordConfirmationMismatchException("새 비밀번호가 서로 일치하지 않습니다.");
         }
 
         // 기존 비밀번호와 새 비밀번호가 동일한지 확인
         if (passwordEncoder.matches(updateUserPasswordDto.getNewPassword(), user.getPassword())) {
-            throw new IllegalArgumentException("기존 비밀번호와 다른 비밀번호를 사용해주세요.");
+            throw new PasswordNotChangedException("기존 비밀번호와 다른 비밀번호를 사용해주세요.");
         }
 
         user.setPassword(passwordEncoder.encode(updateUserPasswordDto.getNewPassword()));
@@ -99,7 +100,7 @@ public class UserService {
     @Transactional
     public void deleteMyInfo(User user) {
         if (user.getDeletedAt() != null) {
-            throw new IllegalArgumentException("이미 탈퇴한 사용자입니다.");
+            throw new AlreadyDeletedUserException("이미 탈퇴한 사용자입니다.");
         }
 
         userRepository.delete(user);
