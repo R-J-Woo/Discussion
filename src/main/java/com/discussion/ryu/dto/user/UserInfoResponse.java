@@ -9,7 +9,6 @@ public record UserInfoResponse(
     String username,
     String name,
     String email,
-    String grade,
     LocalDateTime createdAt,
     LocalDateTime updatedAt
 ) {
@@ -18,7 +17,6 @@ public record UserInfoResponse(
                 user.getUsername(),
                 user.getName(),
                 user.getEmail(),
-                user.getGrade(),
                 user.getCreatedAt(),
                 user.getUpdatedAt()
         );

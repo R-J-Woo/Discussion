@@ -14,13 +14,14 @@ import java.time.ZonedDateTime;
 
 @Service
 @RequiredArgsConstructor
-@Transactional
+@Transactional(readOnly = true)
 public class UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
 
+    @Transactional
     public void signup(UserSignUpDto userSignUpDto) {
         if (userRepository.existsByUsername(userSignUpDto.getUsername())) {
             throw new IllegalArgumentException("이미 존재하는 아이디입니다.");
@@ -35,7 +36,6 @@ public class UserService {
         user.setPassword(passwordEncoder.encode(userSignUpDto.getPassword()));
         user.setName(userSignUpDto.getName());
         user.setEmail(userSignUpDto.getEmail());
-        user.setGrade("일반");
         user.setProvider(AuthProvider.LOCAL);
         user.setProviderId(userSignUpDto.getUsername());
         userRepository.save(user);
@@ -56,10 +56,15 @@ public class UserService {
         return UserInfoResponse.from(user);
     }
 
+    @Transactional
     public UserInfoResponse updateMyInfo(User user, UpdateUserInfoDto updateUserInfoDto) {
 
-        if (userRepository.existsByName(updateUserInfoDto.getName())) {
+        if (userRepository.existsByNameAndUserIdNot(updateUserInfoDto.getName(), user.getUserId())) {
             throw new IllegalArgumentException("이미 존재하는 닉네임입니다.");
+        }
+
+        if (userRepository.existsByEmailAndUserIdNot(updateUserInfoDto.getEmail(), user.getUserId())) {
+            throw new IllegalArgumentException("이미 존재하는 이메일입니다.");
         }
 
         user.setName(updateUserInfoDto.getName());
@@ -69,6 +74,7 @@ public class UserService {
         return UserInfoResponse.from(user);
     }
 
+    @Transactional
     public void updatePassword(User user, UpdateUserPasswordDto updateUserPasswordDto) {
 
         // 현재 비밀번호 일치 확인
@@ -90,6 +96,7 @@ public class UserService {
         userRepository.save(user);
     }
 
+    @Transactional
     public void deleteMyInfo(User user) {
         if (user.getDeletedAt() != null) {
             throw new IllegalArgumentException("이미 탈퇴한 사용자입니다.");

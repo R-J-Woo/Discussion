@@ -42,11 +42,8 @@ public class User implements UserDetails {
     @Column(nullable = false)
     private String name;
 
-    @Column
+    @Column(nullable = false)
     private String email;
-
-    @Column
-    private String grade;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
