@@ -35,3 +35,7 @@ out/
 
 ### VS Code ###
 .vscode/
+
+### 민감정보 파일 ###
+application-local.yml
+*-local.yml
