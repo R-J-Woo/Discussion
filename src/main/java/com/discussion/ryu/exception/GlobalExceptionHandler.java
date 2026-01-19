@@ -10,12 +10,6 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    @ExceptionHandler(RuntimeException.class)
-    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
-    public ApiResponse<Void> handleRuntimeException(RuntimeException e) {
-        return ApiResponse.fail("서버 내부 오류가 발생했습니다.", HttpStatus.INTERNAL_SERVER_ERROR);
-    }
-
     @ExceptionHandler(AlreadyDeletedUserException.class)
     @ResponseStatus(HttpStatus.CONFLICT)
     public ApiResponse<Void> handleAlreadyDeletedUserException(AlreadyDeletedUserException e) {
@@ -56,5 +50,11 @@ public class GlobalExceptionHandler {
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ApiResponse<Void> handleValidationException(MethodArgumentNotValidException e) {
         return ApiResponse.fail(e.getMessage(), HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(RuntimeException.class)
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    public ApiResponse<Void> handleRuntimeException(RuntimeException e) {
+        return ApiResponse.fail("서버 내부 오류가 발생했습니다.", HttpStatus.INTERNAL_SERVER_ERROR);
     }
 }
