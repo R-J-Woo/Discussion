@@ -1,4 +1,4 @@
-package com.discussion.ryu.exception;
+package com.discussion.ryu.exception.user;
 
 public class InvalidCurrentPasswordException extends RuntimeException {
 
