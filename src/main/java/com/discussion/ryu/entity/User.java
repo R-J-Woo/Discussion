@@ -14,18 +14,17 @@ import java.util.Collection;
 import java.util.List;
 
 @Entity
-@Table(
-        name = "users",
-        uniqueConstraints = {
-                @UniqueConstraint(columnNames = {"username", "deleted_at"}),
-                @UniqueConstraint(columnNames = {"email", "deleted_at"}),
-                @UniqueConstraint(columnNames = {"name", "deleted_at"}),
-                @UniqueConstraint(columnNames = {"provider", "provider_id", "deleted_at"})
-        }
-)
+@Table(name = "users")
 @Getter @Setter
 @NoArgsConstructor
-@SQLDelete(sql = "UPDATE users SET deleted_at = NOW() WHERE user_id = ?")
+@SQLDelete(sql =
+        "UPDATE users SET " +
+        "deleted_at = NOW(), " +
+        "username = CONCAT(username, '_deleted_', user_id), " +
+        "email = CONCAT(email, '_deleted_', user_id), " +
+        "name = CONCAT(name, '_deleted_', user_id) " +
+        "WHERE user_id = ?"
+)
 @SQLRestriction("deleted_at IS NULL")
 public class User implements UserDetails {
 
@@ -33,16 +32,16 @@ public class User implements UserDetails {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long userId;
 
-    @Column
+    @Column(unique = true, nullable = false)
     private String username;
 
-    @Column
+    @Column(unique = true, nullable = false)
     private String password;
 
-    @Column(nullable = false)
+    @Column(unique = true, nullable = false)
     private String name;
 
-    @Column(nullable = false)
+    @Column(unique = true, nullable = false)
     private String email;
 
     @Enumerated(EnumType.STRING)
