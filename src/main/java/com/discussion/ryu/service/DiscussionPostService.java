@@ -70,4 +70,16 @@ public class DiscussionPostService {
         discussionPostRepository.save(discussionPost);
         return DiscussionPostResponse.from(discussionPost);
     }
+
+    @Transactional
+    public void deletePost(User user, Long postId) {
+        DiscussionPost discussionPost = discussionPostRepository.findById(postId)
+                .orElseThrow(() -> new DiscussionPostNotFoundException("존재하지 않는 토론글입니다."));
+
+        if (!discussionPost.getAuthor().getUserId().equals(user.getUserId())) {
+            throw new UserNotAuthorException("본인이 작성한 토론글만 삭제할 수 있습니다.");
+        }
+
+        discussionPostRepository.delete(discussionPost);
+    }
 }

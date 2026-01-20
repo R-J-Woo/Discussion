@@ -57,4 +57,13 @@ public class DiscussionPostController {
         DiscussionPostResponse discussionPostResponse = discussionPostService.updatePost(user, postId, discussionPostUpdateDto);
         return ResponseEntity.ok(ApiResponse.success(discussionPostResponse, "토론글이 수정되었습니다.", HttpStatus.OK));
     }
+
+    @DeleteMapping("/{postId}")
+    public ResponseEntity<ApiResponse<Void>> deletePost(
+            @AuthenticationPrincipal User user,
+            @PathVariable Long postId
+    ) {
+        discussionPostService.deletePost(user, postId);
+        return ResponseEntity.ok(ApiResponse.success(null, "토론글이 삭제되었습니다.", HttpStatus.OK));
+    }
 }
