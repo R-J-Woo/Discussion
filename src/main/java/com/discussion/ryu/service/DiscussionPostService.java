@@ -56,6 +56,13 @@ public class DiscussionPostService {
         return DiscussionPostResponse.from(discussionPost);
     }
 
+    public List<DiscussionPostResponse> getMyPosts(User user) {
+        return discussionPostRepository.findByAuthor(user)
+                .stream()
+                .map(DiscussionPostResponse::from)
+                .collect(Collectors.toList());
+    }
+
     @Transactional
     public DiscussionPostResponse updatePost(User user, Long postId, DiscussionPostUpdateDto discussionPostUpdateDto) {
         DiscussionPost discussionPost = discussionPostRepository.findById(postId)

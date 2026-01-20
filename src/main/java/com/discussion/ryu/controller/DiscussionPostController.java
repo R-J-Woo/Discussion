@@ -48,6 +48,12 @@ public class DiscussionPostController {
         return ResponseEntity.ok(ApiResponse.success(discussionPostResponse, "토론글을 조회했습니다.", HttpStatus.OK));
     }
 
+    @GetMapping("/my")
+    public ResponseEntity<ApiResponse<List<DiscussionPostResponse>>> getMyPosts(@AuthenticationPrincipal User user) {
+        List<DiscussionPostResponse> discussionPostResponses = discussionPostService.getMyPosts(user);
+        return ResponseEntity.ok(ApiResponse.success(discussionPostResponses, "토론글을 조회했습니다.", HttpStatus.OK));
+    }
+
     @PutMapping("/{postId}")
     public ResponseEntity<ApiResponse<DiscussionPostResponse>> updatePost(
             @AuthenticationPrincipal User user,
