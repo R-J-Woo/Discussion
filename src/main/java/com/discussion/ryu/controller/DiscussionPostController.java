@@ -3,6 +3,7 @@ package com.discussion.ryu.controller;
 import com.discussion.ryu.dto.ApiResponse;
 import com.discussion.ryu.dto.discussion.DiscussionPostCreateDto;
 import com.discussion.ryu.dto.discussion.DiscussionPostResponse;
+import com.discussion.ryu.dto.discussion.DiscussionPostUpdateDto;
 import com.discussion.ryu.dto.user.*;
 import com.discussion.ryu.entity.DiscussionPost;
 import com.discussion.ryu.entity.User;
@@ -45,5 +46,15 @@ public class DiscussionPostController {
     public ResponseEntity<ApiResponse<DiscussionPostResponse>> getPost(@PathVariable Long postId) {
         DiscussionPostResponse discussionPostResponse = discussionPostService.getPost(postId);
         return ResponseEntity.ok(ApiResponse.success(discussionPostResponse, "토론글을 조회했습니다.", HttpStatus.OK));
+    }
+
+    @PutMapping("/{postId}")
+    public ResponseEntity<ApiResponse<DiscussionPostResponse>> updatePost(
+            @AuthenticationPrincipal User user,
+            @PathVariable Long postId,
+            @Valid @RequestBody DiscussionPostUpdateDto discussionPostUpdateDto
+    ) {
+        DiscussionPostResponse discussionPostResponse = discussionPostService.updatePost(user, postId, discussionPostUpdateDto);
+        return ResponseEntity.ok(ApiResponse.success(discussionPostResponse, "토론글이 수정되었습니다.", HttpStatus.OK));
     }
 }
