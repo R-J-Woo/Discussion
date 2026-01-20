@@ -40,9 +40,8 @@ public class SecurityConfig {
                                 "/api/users/login",     // 로그인
                                 "/oauth2/**"
                         ).permitAll()
-                        .requestMatchers("/api/discussions/my").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/discussions").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/discussions/{postId}").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/discussions/{postId:[0-9]+}").permitAll()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)

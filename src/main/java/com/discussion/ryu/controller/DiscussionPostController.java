@@ -1,9 +1,7 @@
 package com.discussion.ryu.controller;
 
 import com.discussion.ryu.dto.ApiResponse;
-import com.discussion.ryu.dto.discussion.DiscussionPostCreateDto;
-import com.discussion.ryu.dto.discussion.DiscussionPostResponse;
-import com.discussion.ryu.dto.discussion.DiscussionPostUpdateDto;
+import com.discussion.ryu.dto.discussion.*;
 import com.discussion.ryu.dto.user.*;
 import com.discussion.ryu.entity.DiscussionPost;
 import com.discussion.ryu.entity.User;
@@ -71,5 +69,33 @@ public class DiscussionPostController {
     ) {
         discussionPostService.deletePost(user, postId);
         return ResponseEntity.ok(ApiResponse.success(null, "토론글이 삭제되었습니다.", HttpStatus.OK));
+    }
+
+    @PostMapping("/{postId}/vote")
+    public ResponseEntity<ApiResponse<VoteResponse>> vote(
+            @AuthenticationPrincipal User user,
+            @PathVariable Long postId,
+            @Valid@RequestBody VoteRequestDto voteRequestDto
+    ) {
+        VoteResponse voteResponse = discussionPostService.vote(user, postId, voteRequestDto);
+        return ResponseEntity.ok(ApiResponse.success(voteResponse, "투표가 완료되었습니다.", HttpStatus.OK));
+    }
+
+    @DeleteMapping("/{postId}/vote")
+    public ResponseEntity<ApiResponse<Void>> cancelVote(
+            @AuthenticationPrincipal User user,
+            @PathVariable Long postId
+    ) {
+        discussionPostService.cancelVote(postId, user);
+        return ResponseEntity.ok(ApiResponse.success(null, "투표가 취소되었습니다.", HttpStatus.OK));
+    }
+
+    @GetMapping("/{postId}/vote")
+    public ResponseEntity<ApiResponse<VoteStatusResponse>> getVoteStatus(
+            @AuthenticationPrincipal User user,
+            @PathVariable Long postId
+    ) {
+        VoteStatusResponse response = discussionPostService.getVoteStatus(postId, user);
+        return ResponseEntity.ok(ApiResponse.success(response, "투표 상태를 조회했습니다.", HttpStatus.OK));
     }
 }

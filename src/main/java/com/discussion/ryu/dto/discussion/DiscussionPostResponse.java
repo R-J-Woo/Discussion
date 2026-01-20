@@ -9,17 +9,19 @@ import java.time.LocalDateTime;
 public record DiscussionPostResponse(
         String title,
         String content,
-        User author,
+        Long authorId,
+        String authorName,
         Long agreeCount,
         Long disagreeCount,
-        LocalDateTime createAt,
+        LocalDateTime createdAt,
         LocalDateTime updatedAt
 ) {
     public static DiscussionPostResponse from(DiscussionPost post) {
         return new DiscussionPostResponse(
                 post.getTitle(),
                 post.getContent(),
-                post.getAuthor(),
+                post.getAuthor().getUserId(),
+                post.getAuthor().getName(),
                 post.getAgreeCount(),
                 post.getDisagreeCount(),
                 post.getCreatedAt(),

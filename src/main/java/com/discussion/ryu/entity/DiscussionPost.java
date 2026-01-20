@@ -8,8 +8,11 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
+@Table(name = "discussion_posts")
 @Getter @Setter
 @NoArgsConstructor
 public class DiscussionPost {
@@ -25,7 +28,7 @@ public class DiscussionPost {
     @Column(nullable = false)
     private String content;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     private User author;
 
@@ -35,7 +38,11 @@ public class DiscussionPost {
     @Column(nullable = false)
     private Long disagreeCount = 0L;
 
+    @OneToMany(mappedBy = "discussionPost", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<DiscussionVote> votes = new ArrayList<>();
+
     @CreationTimestamp
+    @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
     @UpdateTimestamp
