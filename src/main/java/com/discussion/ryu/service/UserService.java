@@ -30,13 +30,15 @@ public class UserService {
             throw new DuplicateNameException("이미 존재하는 닉네임입니다.");
         }
 
-        User user = new User();
-        user.setUsername(userSignUpDto.getUsername());
-        user.setPassword(passwordEncoder.encode(userSignUpDto.getPassword()));
-        user.setName(userSignUpDto.getName());
-        user.setEmail(userSignUpDto.getEmail());
-        user.setProvider(AuthProvider.LOCAL);
-        user.setProviderId(userSignUpDto.getUsername());
+        User user = User.builder()
+                .username(userSignUpDto.getUsername())
+                .password(passwordEncoder.encode(userSignUpDto.getPassword()))
+                .name(userSignUpDto.getName())
+                .email(userSignUpDto.getEmail())
+                .provider(AuthProvider.LOCAL)
+                .providerId(userSignUpDto.getUsername())
+                .build();
+
         userRepository.save(user);
     }
 
@@ -66,8 +68,7 @@ public class UserService {
             throw new DuplicateEmailException("이미 존재하는 이메일입니다.");
         }
 
-        user.setName(updateUserInfoDto.getName());
-        user.setEmail(updateUserInfoDto.getEmail());
+        user.updateInfo(updateUserInfoDto.getName(), updateUserInfoDto.getEmail());
         userRepository.save(user);
 
         return UserInfoResponse.from(user);
@@ -91,7 +92,7 @@ public class UserService {
             throw new PasswordNotChangedException("기존 비밀번호와 다른 비밀번호를 사용해주세요.");
         }
 
-        user.setPassword(passwordEncoder.encode(updateUserPasswordDto.getNewPassword()));
+        user.updatePassword(passwordEncoder.encode(updateUserPasswordDto.getNewPassword()));
         userRepository.save(user);
     }
 

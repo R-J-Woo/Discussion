@@ -1,9 +1,7 @@
 package com.discussion.ryu.entity;
 
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
@@ -16,8 +14,10 @@ import java.time.LocalDateTime;
                 @UniqueConstraint(columnNames = {"user_id", "discussion_post_id"})  // 한 사용자당 한 토론글에 1표만
         }
 )
-@Getter @Setter
+@Getter
+@Builder
 @NoArgsConstructor
+@AllArgsConstructor
 public class DiscussionVote {
 
     @Id
@@ -42,4 +42,8 @@ public class DiscussionVote {
 
     @UpdateTimestamp
     private LocalDateTime updatedAt;
+
+    public void changeVoteType(VoteType voteType) {
+        this.voteType = voteType;
+    }
 }

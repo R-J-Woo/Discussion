@@ -29,10 +29,13 @@ public class DiscussionPostService {
     @Transactional
     public DiscussionPostResponse createPost(User user, DiscussionPostCreateDto discussionPostCreateDto) {
 
-        DiscussionPost discussionPost = new DiscussionPost();
-        discussionPost.setTitle(discussionPostCreateDto.getTitle());
-        discussionPost.setContent(discussionPostCreateDto.getContent());
-        discussionPost.setAuthor(user);
+        DiscussionPost discussionPost = DiscussionPost.builder()
+                .title(discussionPostCreateDto.getTitle())
+                .content(discussionPostCreateDto.getContent())
+                .author(user)
+                .agreeCount(0L)
+                .disagreeCount(0L)
+                .build();
 
         DiscussionPost savedPost = discussionPostRepository.save(discussionPost);
         return DiscussionPostResponse.from(savedPost);
@@ -69,8 +72,7 @@ public class DiscussionPostService {
             throw new UserNotAuthorException("본인이 작성한 토론글만 수정할 수 있습니다.");
         }
 
-        discussionPost.setTitle(discussionPostUpdateDto.getTitle());
-        discussionPost.setContent(discussionPostUpdateDto.getContent());
+        discussionPost.updatePost(discussionPostUpdateDto.getTitle(), discussionPostUpdateDto.getContent());
         discussionPostRepository.save(discussionPost);
         return DiscussionPostResponse.from(discussionPost);
     }

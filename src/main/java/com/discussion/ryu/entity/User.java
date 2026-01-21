@@ -15,8 +15,10 @@ import java.util.List;
 
 @Entity
 @Table(name = "users")
-@Getter @Setter
+@Getter
+@Builder
 @NoArgsConstructor
+@AllArgsConstructor
 @SQLDelete(sql =
         "UPDATE users SET " +
         "deleted_at = NOW(), " +
@@ -60,6 +62,15 @@ public class User implements UserDetails {
 
     @Column
     private LocalDateTime deletedAt;
+
+    public void updateInfo(String name, String email) {
+        this.name = name;
+        this.email = email;
+    }
+
+    public void updatePassword(String password) {
+        this.password = password;
+    }
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

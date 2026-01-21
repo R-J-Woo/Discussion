@@ -41,17 +41,20 @@ public class DiscussionVoteService {
 
     @Transactional
     public VoteResponse createVote(User user, DiscussionPost discussionPost, VoteType voteType) {
-        DiscussionVote vote = new DiscussionVote();
-        vote.setUser(user);
-        vote.setDiscussionPost(discussionPost);
-        vote.setVoteType(voteType);
-        DiscussionVote savedVote = discussionVoteRepository.save(vote);
+        DiscussionVote discussionVote = DiscussionVote.builder()
+                .user(user)
+                .discussionPost(discussionPost)
+                .voteType(voteType)
+                .build();
 
         if (voteType == VoteType.AGREE) {
-            discussionPost.setAgreeCount(discussionPost.getAgreeCount() + 1);
+            discussionPost.incrementAgreeCount();
         } else {
-            discussionPost.setDisagreeCount(discussionPost.getDisagreeCount() + 1);
+            discussionPost.incrementDisagreeCount();
         }
+
+        DiscussionVote savedVote = discussionVoteRepository.save(discussionVote);
+        discussionPostRepository.save(discussionPost);
 
         return VoteResponse.from(savedVote);
     }
@@ -65,14 +68,14 @@ public class DiscussionVoteService {
             return VoteResponse.from(vote);
         }
 
-        vote.setVoteType(newVoteType);
+        vote.changeVoteType(newVoteType);
 
         if (beforeType == VoteType.AGREE) {
-            discussionPost.setAgreeCount(discussionPost.getAgreeCount() - 1);
-            discussionPost.setDisagreeCount(discussionPost.getDisagreeCount() + 1);
+            discussionPost.decrementAgreeCount();
+            discussionPost.incrementDisagreeCount();
         } else {
-            discussionPost.setDisagreeCount(discussionPost.getDisagreeCount() - 1);
-            discussionPost.setAgreeCount(discussionPost.getAgreeCount() + 1);
+            discussionPost.incrementAgreeCount();
+            discussionPost.decrementDisagreeCount();
         }
 
         return VoteResponse.from(vote);
@@ -87,9 +90,9 @@ public class DiscussionVoteService {
                 .orElseThrow(() -> new IllegalArgumentException("투표 기록이 없습니다."));
 
         if (vote.getVoteType() == VoteType.AGREE) {
-            post.setAgreeCount(post.getAgreeCount() - 1);
+            post.decrementAgreeCount();
         } else {
-            post.setDisagreeCount(post.getDisagreeCount() - 1);
+            post.decrementDisagreeCount();
         }
 
         discussionVoteRepository.delete(vote);

@@ -1,9 +1,7 @@
 package com.discussion.ryu.entity;
 
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
@@ -13,8 +11,10 @@ import java.util.List;
 
 @Entity
 @Table(name = "discussion_posts")
-@Getter @Setter
+@Getter
+@Builder
 @NoArgsConstructor
+@AllArgsConstructor
 public class DiscussionPost {
 
     @Id
@@ -47,4 +47,29 @@ public class DiscussionPost {
 
     @UpdateTimestamp
     private LocalDateTime updatedAt;
+
+    public void updatePost(String title, String content) {
+        this.title = title;
+        this.content = content;
+    }
+
+    public void incrementAgreeCount() {
+        this.agreeCount++;
+    }
+
+    public void incrementDisagreeCount() {
+        this.disagreeCount++;
+    }
+
+    public void decrementAgreeCount() {
+        if (this.agreeCount > 0) {
+            this.agreeCount--;
+        }
+    }
+
+    public void decrementDisagreeCount() {
+        if (this.disagreeCount > 0) {
+            this.disagreeCount--;
+        }
+    }
 }
