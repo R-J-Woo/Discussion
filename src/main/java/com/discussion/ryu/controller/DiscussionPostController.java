@@ -6,6 +6,7 @@ import com.discussion.ryu.dto.user.*;
 import com.discussion.ryu.entity.DiscussionPost;
 import com.discussion.ryu.entity.User;
 import com.discussion.ryu.service.DiscussionPostService;
+import com.discussion.ryu.service.DiscussionVoteService;
 import com.discussion.ryu.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -22,6 +23,7 @@ import java.util.List;
 public class DiscussionPostController {
 
     private final DiscussionPostService discussionPostService;
+    private final DiscussionVoteService discussionVoteService;
 
     @PostMapping
     public ResponseEntity<ApiResponse<DiscussionPostResponse>> createPost(
@@ -77,7 +79,7 @@ public class DiscussionPostController {
             @PathVariable Long postId,
             @Valid@RequestBody VoteRequestDto voteRequestDto
     ) {
-        VoteResponse voteResponse = discussionPostService.vote(user, postId, voteRequestDto);
+        VoteResponse voteResponse = discussionVoteService.vote(user, postId, voteRequestDto);
         return ResponseEntity.ok(ApiResponse.success(voteResponse, "투표가 완료되었습니다.", HttpStatus.OK));
     }
 
@@ -86,7 +88,7 @@ public class DiscussionPostController {
             @AuthenticationPrincipal User user,
             @PathVariable Long postId
     ) {
-        discussionPostService.cancelVote(postId, user);
+        discussionVoteService.cancelVote(postId, user);
         return ResponseEntity.ok(ApiResponse.success(null, "투표가 취소되었습니다.", HttpStatus.OK));
     }
 
@@ -95,7 +97,7 @@ public class DiscussionPostController {
             @AuthenticationPrincipal User user,
             @PathVariable Long postId
     ) {
-        VoteStatusResponse response = discussionPostService.getVoteStatus(postId, user);
+        VoteStatusResponse response = discussionVoteService.getVoteStatus(postId, user);
         return ResponseEntity.ok(ApiResponse.success(response, "투표 상태를 조회했습니다.", HttpStatus.OK));
     }
 }
