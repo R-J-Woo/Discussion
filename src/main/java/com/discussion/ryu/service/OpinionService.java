@@ -12,6 +12,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -35,5 +37,12 @@ public class OpinionService {
 
         Opinion savedOpinion = opinionRepository.save(opinion);
         return OpinionResponse.from(savedOpinion);
+    }
+
+    public List<OpinionResponse> getOpinionsByPost(DiscussionPost discussionPost) {
+        return opinionRepository.findByDiscussionPost(discussionPost)
+                .stream()
+                .map(OpinionResponse::from)
+                .toList();
     }
 }

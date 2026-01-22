@@ -2,6 +2,7 @@ package com.discussion.ryu.service;
 
 import com.discussion.ryu.config.JwtTokenProvider;
 import com.discussion.ryu.dto.discussion.*;
+import com.discussion.ryu.dto.opinion.OpinionResponse;
 import com.discussion.ryu.dto.user.*;
 import com.discussion.ryu.entity.*;
 import com.discussion.ryu.exception.*;
@@ -25,6 +26,7 @@ import java.util.stream.Collectors;
 public class DiscussionPostService {
 
     private final DiscussionPostRepository discussionPostRepository;
+    private final OpinionService opinionService;
 
     @Transactional
     public DiscussionPostResponse createPost(User user, DiscussionPostCreateDto discussionPostCreateDto) {
@@ -53,7 +55,8 @@ public class DiscussionPostService {
         DiscussionPost discussionPost = discussionPostRepository.findById(postId)
                 .orElseThrow(() -> new DiscussionPostNotFoundException("존재하지 않는 토론글입니다."));
 
-        return DiscussionPostResponse.from(discussionPost);
+        List<OpinionResponse> opnions = opinionService.getOpinionsByPost(discussionPost);
+        return DiscussionPostResponse.from(discussionPost, opnions);
     }
 
     public List<DiscussionPostResponse> getMyPosts(User user) {

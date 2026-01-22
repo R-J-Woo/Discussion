@@ -30,4 +30,5 @@ public class OpinionController {
                 .status(HttpStatus.CREATED)
                 .body(ApiResponse.success(opinionResponse, "의견 등록이 완료되었습니다.", HttpStatus.CREATED));
     }
+
 }
