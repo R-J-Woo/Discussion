@@ -7,6 +7,7 @@ import com.discussion.ryu.entity.User;
 import java.time.LocalDateTime;
 
 public record DiscussionPostResponse(
+        Long id,
         String title,
         String content,
         Long authorId,
@@ -18,6 +19,7 @@ public record DiscussionPostResponse(
 ) {
     public static DiscussionPostResponse from(DiscussionPost post) {
         return new DiscussionPostResponse(
+                post.getId(),
                 post.getTitle(),
                 post.getContent(),
                 post.getAuthor().getUserId(),

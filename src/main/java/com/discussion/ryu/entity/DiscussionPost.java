@@ -45,6 +45,9 @@ public class DiscussionPost {
     @OneToMany(mappedBy = "discussionPost", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<DiscussionVote> votes = new ArrayList<>();
 
+    @OneToMany(mappedBy = "discussionPost", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Opinion> opinions = new ArrayList<>();
+
     @CreationTimestamp
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
