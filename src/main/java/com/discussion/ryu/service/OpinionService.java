@@ -62,4 +62,16 @@ public class OpinionService {
         Opinion savedOpinion = opinionRepository.save(opinion);
         return OpinionResponse.from(savedOpinion);
     }
+
+    @Transactional
+    public void deleteOpinion(Long opinionId, User user) {
+        Opinion opinion = opinionRepository.findById(opinionId)
+                .orElseThrow(() -> new OpinionNotFoundException("존재하지 않는 의견입니다."));
+
+        if (!opinion.getAuthor().getUsername().equals(user.getUsername())) {
+            throw new UserNotAuthorException("본인이 작성한 의견만 삭제할 수 있습니다.");
+        }
+
+        opinionRepository.delete(opinion);
+    }
 }

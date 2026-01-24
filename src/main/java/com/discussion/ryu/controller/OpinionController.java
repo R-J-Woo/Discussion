@@ -43,4 +43,13 @@ public class OpinionController {
         return ResponseEntity.ok(ApiResponse.success(opinionResponse, "의견이 수정되었습니다.", HttpStatus.OK));
     }
 
+    @DeleteMapping("/{opinionId}")
+    public ResponseEntity<ApiResponse<Void>> deleteOpinion(
+            @AuthenticationPrincipal User user,
+            @PathVariable Long opinionId
+    ) {
+        opinionService.deleteOpinion(opinionId, user);
+        return ResponseEntity.ok(ApiResponse.success(null, "의견이 삭제되었습니다.", HttpStatus.OK));
+    }
+
 }
