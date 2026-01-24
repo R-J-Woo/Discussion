@@ -2,6 +2,7 @@ package com.discussion.ryu.exception;
 
 import com.discussion.ryu.dto.ApiResponse;
 import com.discussion.ryu.exception.discussion.DiscussionPostNotFoundException;
+import com.discussion.ryu.exception.opinion.OpinionNotFoundException;
 import com.discussion.ryu.exception.user.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -54,10 +55,13 @@ public class GlobalExceptionHandler {
         return ApiResponse.fail(e.getMessage(), HttpStatus.BAD_REQUEST);
     }
 
-    // 토론글 조회 실패 에러
-    @ExceptionHandler(DiscussionPostNotFoundException.class)
+    // 조회 실패 에러
+    @ExceptionHandler({
+            DiscussionPostNotFoundException.class,
+            OpinionNotFoundException.class
+    })
     @ResponseStatus(HttpStatus.NOT_FOUND)
-    public ApiResponse<Void> handlePostNotFoundException(DiscussionPostNotFoundException e) {
+    public ApiResponse<Void> handleNotFoundException(RuntimeException e) {
         return ApiResponse.fail(e.getMessage(), HttpStatus.NOT_FOUND);
     }
 

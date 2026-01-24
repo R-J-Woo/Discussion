@@ -3,6 +3,8 @@ package com.discussion.ryu.controller;
 import com.discussion.ryu.dto.ApiResponse;
 import com.discussion.ryu.dto.opinion.OpinionCreateDto;
 import com.discussion.ryu.dto.opinion.OpinionResponse;
+import com.discussion.ryu.dto.opinion.OpinionUpdateDto;
+import com.discussion.ryu.entity.Opinion;
 import com.discussion.ryu.entity.User;
 import com.discussion.ryu.service.OpinionService;
 import jakarta.validation.Valid;
@@ -29,6 +31,16 @@ public class OpinionController {
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(ApiResponse.success(opinionResponse, "의견 등록이 완료되었습니다.", HttpStatus.CREATED));
+    }
+
+    @PutMapping("/{opinionId}")
+    public ResponseEntity<ApiResponse<OpinionResponse>> updateOpinion(
+            @AuthenticationPrincipal User user,
+            @PathVariable Long opinionId,
+            @Valid @RequestBody OpinionUpdateDto opinionUpdateDto
+    ) {
+        OpinionResponse opinionResponse = opinionService.updateOpinion(opinionId, user, opinionUpdateDto);
+        return ResponseEntity.ok(ApiResponse.success(opinionResponse, "의견이 수정되었습니다.", HttpStatus.OK));
     }
 
 }

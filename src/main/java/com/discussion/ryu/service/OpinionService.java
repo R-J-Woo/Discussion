@@ -2,10 +2,13 @@ package com.discussion.ryu.service;
 
 import com.discussion.ryu.dto.opinion.OpinionCreateDto;
 import com.discussion.ryu.dto.opinion.OpinionResponse;
+import com.discussion.ryu.dto.opinion.OpinionUpdateDto;
 import com.discussion.ryu.entity.DiscussionPost;
 import com.discussion.ryu.entity.Opinion;
 import com.discussion.ryu.entity.User;
 import com.discussion.ryu.exception.discussion.DiscussionPostNotFoundException;
+import com.discussion.ryu.exception.discussion.UserNotAuthorException;
+import com.discussion.ryu.exception.opinion.OpinionNotFoundException;
 import com.discussion.ryu.repository.DiscussionPostRepository;
 import com.discussion.ryu.repository.OpinionRepository;
 import lombok.RequiredArgsConstructor;
@@ -44,5 +47,19 @@ public class OpinionService {
                 .stream()
                 .map(OpinionResponse::from)
                 .toList();
+    }
+
+    @Transactional
+    public OpinionResponse updateOpinion(Long opinionId, User user, OpinionUpdateDto opinionUpdateDto) {
+        Opinion opinion = opinionRepository.findById(opinionId)
+                .orElseThrow(() -> new OpinionNotFoundException("존재하지 않는 의견입니다."));
+
+        if (!opinion.getAuthor().getUsername().equals(user.getUsername())) {
+            throw new UserNotAuthorException("본인이 작성한 의견만 수정할 수 있습니다.");
+        }
+
+        opinion.updateOpinion(opinionUpdateDto.getContent(), opinionUpdateDto.getOpinionStance());
+        Opinion savedOpinion = opinionRepository.save(opinion);
+        return OpinionResponse.from(savedOpinion);
     }
 }

@@ -54,4 +54,9 @@ public class Opinion {
 
     @Column
     private LocalDateTime deletedAt;
+
+    public void updateOpinion(String content, OpinionStance stance) {
+        this.content = content;
+        this.stance = stance;
+    }
 }
