@@ -10,6 +10,10 @@ import com.discussion.ryu.service.DiscussionVoteService;
 import com.discussion.ryu.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -39,22 +43,42 @@ public class DiscussionPostController {
 
     // 토론글 목록 조회
     @GetMapping
-    public ResponseEntity<ApiResponse<List<DiscussionPostResponse>>> getAllPosts() {
-        List<DiscussionPostResponse> discussionPostResponses = discussionPostService.getAllPosts();
+    public ResponseEntity<ApiResponse<Page<DiscussionPostResponse>>> getAllPosts(
+            @PageableDefault(
+                    size = 20,
+                    sort = "createdAt",
+                    direction = Sort.Direction.DESC
+            ) Pageable pageable
+    ) {
+        Page<DiscussionPostResponse> discussionPostResponses = discussionPostService.getAllPosts(pageable);
         return ResponseEntity.ok(ApiResponse.success(discussionPostResponses, "토론글 목록을 조회하였습니다.", HttpStatus.OK));
     }
 
     // 토론글 상세 조회
     @GetMapping("/{postId}")
-    public ResponseEntity<ApiResponse<DiscussionPostResponse>> getPost(@PathVariable Long postId) {
-        DiscussionPostResponse discussionPostResponse = discussionPostService.getPost(postId);
+    public ResponseEntity<ApiResponse<DiscussionPostResponse>> getPost(
+            @PathVariable Long postId,
+            @PageableDefault(
+                    size = 20,
+                    sort = "createdAt",
+                    direction = Sort.Direction.DESC
+            ) Pageable pageable
+    ) {
+        DiscussionPostResponse discussionPostResponse = discussionPostService.getPost(postId, pageable);
         return ResponseEntity.ok(ApiResponse.success(discussionPostResponse, "토론글을 조회했습니다.", HttpStatus.OK));
     }
 
     // 내가 작성한 토론글 목록 조회
     @GetMapping("/my")
-    public ResponseEntity<ApiResponse<List<DiscussionPostResponse>>> getMyPosts(@AuthenticationPrincipal User user) {
-        List<DiscussionPostResponse> discussionPostResponses = discussionPostService.getMyPosts(user);
+    public ResponseEntity<ApiResponse<Page<DiscussionPostResponse>>> getMyPosts(
+            @AuthenticationPrincipal User user,
+            @PageableDefault(
+                    size = 20,
+                    sort = "createdAt",
+                    direction = Sort.Direction.DESC
+            ) Pageable pageable
+    ) {
+        Page<DiscussionPostResponse> discussionPostResponses = discussionPostService.getMyPosts(user, pageable);
         return ResponseEntity.ok(ApiResponse.success(discussionPostResponses, "토론글을 조회했습니다.", HttpStatus.OK));
     }
 

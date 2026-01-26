@@ -4,6 +4,7 @@ import com.discussion.ryu.dto.opinion.OpinionResponse;
 import com.discussion.ryu.dto.user.UserInfoResponse;
 import com.discussion.ryu.entity.DiscussionPost;
 import com.discussion.ryu.entity.User;
+import org.springframework.data.domain.Page;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -16,12 +17,11 @@ public record DiscussionPostResponse(
         String authorName,
         Long agreeCount,
         Long disagreeCount,
-        List<OpinionResponse> opinions,
-        Long opinionCount,
+        Page<OpinionResponse> opinions,
         LocalDateTime createdAt,
         LocalDateTime updatedAt
 ) {
-    public static DiscussionPostResponse from(DiscussionPost post, List<OpinionResponse> opinions) {
+    public static DiscussionPostResponse from(DiscussionPost post, Page<OpinionResponse> opinions) {
         return new DiscussionPostResponse(
                 post.getId(),
                 post.getTitle(),
@@ -31,7 +31,6 @@ public record DiscussionPostResponse(
                 post.getAgreeCount(),
                 post.getDisagreeCount(),
                 opinions,
-                (long) (opinions.size()),
                 post.getCreatedAt(),
                 post.getUpdatedAt()
         );
@@ -46,8 +45,7 @@ public record DiscussionPostResponse(
                 post.getAuthor().getName(),
                 post.getAgreeCount(),
                 post.getDisagreeCount(),
-                List.of(),
-                0L,
+                Page.empty(),
                 post.getCreatedAt(),
                 post.getUpdatedAt()
         );

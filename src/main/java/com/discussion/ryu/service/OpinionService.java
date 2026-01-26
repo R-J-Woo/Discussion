@@ -12,6 +12,8 @@ import com.discussion.ryu.exception.opinion.OpinionNotFoundException;
 import com.discussion.ryu.repository.DiscussionPostRepository;
 import com.discussion.ryu.repository.OpinionRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -43,11 +45,9 @@ public class OpinionService {
         return OpinionResponse.from(savedOpinion);
     }
 
-    public List<OpinionResponse> getOpinionsByPost(DiscussionPost discussionPost) {
-        return opinionRepository.findByDiscussionPost(discussionPost)
-                .stream()
-                .map(OpinionResponse::from)
-                .toList();
+    public Page<OpinionResponse> getOpinionsByPost(DiscussionPost discussionPost, Pageable pageable) {
+        return opinionRepository.findByDiscussionPost(discussionPost, pageable)
+                .map(OpinionResponse::from);
     }
 
     @Transactional

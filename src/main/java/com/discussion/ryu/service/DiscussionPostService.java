@@ -12,6 +12,8 @@ import com.discussion.ryu.repository.DiscussionPostRepository;
 import com.discussion.ryu.repository.DiscussionVoteRepository;
 import com.discussion.ryu.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -43,27 +45,22 @@ public class DiscussionPostService {
         return DiscussionPostResponse.from(savedPost);
     }
 
-    public List<DiscussionPostResponse> getAllPosts() {
-        return discussionPostRepository
-                .findAll()
-                .stream()
-                .map(DiscussionPostResponse::from)
-                .collect(Collectors.toList());
+    public Page<DiscussionPostResponse> getAllPosts(Pageable pageable) {
+        return discussionPostRepository.findAllWithAuthor(pageable)
+                .map(DiscussionPostResponse::from);
     }
 
-    public DiscussionPostResponse getPost(Long postId) {
+    public DiscussionPostResponse getPost(Long postId, Pageable pageable) {
         DiscussionPost discussionPost = discussionPostRepository.findById(postId)
                 .orElseThrow(() -> new DiscussionPostNotFoundException("존재하지 않는 토론글입니다."));
 
-        List<OpinionResponse> opnions = opinionService.getOpinionsByPost(discussionPost);
+        Page<OpinionResponse> opnions = opinionService.getOpinionsByPost(discussionPost, pageable);
         return DiscussionPostResponse.from(discussionPost, opnions);
     }
 
-    public List<DiscussionPostResponse> getMyPosts(User user) {
-        return discussionPostRepository.findByAuthor(user)
-                .stream()
-                .map(DiscussionPostResponse::from)
-                .collect(Collectors.toList());
+    public Page<DiscussionPostResponse> getMyPosts(User user, Pageable pageable) {
+        return discussionPostRepository.findByAuthor(user, pageable)
+                .map(DiscussionPostResponse::from);
     }
 
     @Transactional
