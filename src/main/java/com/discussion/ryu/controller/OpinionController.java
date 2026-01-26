@@ -1,11 +1,10 @@
 package com.discussion.ryu.controller;
 
 import com.discussion.ryu.dto.ApiResponse;
-import com.discussion.ryu.dto.opinion.OpinionCreateDto;
-import com.discussion.ryu.dto.opinion.OpinionResponse;
-import com.discussion.ryu.dto.opinion.OpinionUpdateDto;
+import com.discussion.ryu.dto.opinion.*;
 import com.discussion.ryu.entity.Opinion;
 import com.discussion.ryu.entity.User;
+import com.discussion.ryu.service.OpinionReactionService;
 import com.discussion.ryu.service.OpinionService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -20,7 +19,9 @@ import org.springframework.web.bind.annotation.*;
 public class OpinionController {
 
     private final OpinionService opinionService;
+    private final OpinionReactionService opinionReactionService;
 
+    // 토론글에 의견 등록
     @PostMapping
     public ResponseEntity<ApiResponse<OpinionResponse>> createOpinion(
             @AuthenticationPrincipal User user,
@@ -33,6 +34,7 @@ public class OpinionController {
                 .body(ApiResponse.success(opinionResponse, "의견 등록이 완료되었습니다.", HttpStatus.CREATED));
     }
 
+    // 의견 수정
     @PutMapping("/{opinionId}")
     public ResponseEntity<ApiResponse<OpinionResponse>> updateOpinion(
             @AuthenticationPrincipal User user,
@@ -43,6 +45,7 @@ public class OpinionController {
         return ResponseEntity.ok(ApiResponse.success(opinionResponse, "의견이 수정되었습니다.", HttpStatus.OK));
     }
 
+    // 의견 삭제
     @DeleteMapping("/{opinionId}")
     public ResponseEntity<ApiResponse<Void>> deleteOpinion(
             @AuthenticationPrincipal User user,
@@ -52,4 +55,14 @@ public class OpinionController {
         return ResponseEntity.ok(ApiResponse.success(null, "의견이 삭제되었습니다.", HttpStatus.OK));
     }
 
+    // 사용자 의견 반영
+    @PostMapping("/{opinionId}/reaction")
+    public ResponseEntity<ApiResponse<OpinionReactionResponse>> toggleReaction(
+            @AuthenticationPrincipal User user,
+            @PathVariable Long opinionId,
+            @Valid @RequestBody OpinionReactionRequestDto opinionReactionRequestDto
+    ) {
+        OpinionReactionResponse response = opinionReactionService.toggleReaction(opinionId, user, opinionReactionRequestDto);
+        return ResponseEntity.ok(ApiResponse.success(response, "사용자 의견 반영에 성공하였습니다.", HttpStatus.OK));
+    }
 }

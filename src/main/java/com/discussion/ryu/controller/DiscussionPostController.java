@@ -25,6 +25,7 @@ public class DiscussionPostController {
     private final DiscussionPostService discussionPostService;
     private final DiscussionVoteService discussionVoteService;
 
+    // 토론글 등록
     @PostMapping
     public ResponseEntity<ApiResponse<DiscussionPostResponse>> createPost(
             @AuthenticationPrincipal User user,
@@ -36,24 +37,28 @@ public class DiscussionPostController {
                 .body(ApiResponse.success(discussionPostResponse, "토론글 등록이 완료되었습니다.", HttpStatus.CREATED));
     }
 
+    // 토론글 목록 조회
     @GetMapping
     public ResponseEntity<ApiResponse<List<DiscussionPostResponse>>> getAllPosts() {
         List<DiscussionPostResponse> discussionPostResponses = discussionPostService.getAllPosts();
         return ResponseEntity.ok(ApiResponse.success(discussionPostResponses, "토론글 목록을 조회하였습니다.", HttpStatus.OK));
     }
 
+    // 토론글 상세 조회
     @GetMapping("/{postId}")
     public ResponseEntity<ApiResponse<DiscussionPostResponse>> getPost(@PathVariable Long postId) {
         DiscussionPostResponse discussionPostResponse = discussionPostService.getPost(postId);
         return ResponseEntity.ok(ApiResponse.success(discussionPostResponse, "토론글을 조회했습니다.", HttpStatus.OK));
     }
 
+    // 내가 작성한 토론글 목록 조회
     @GetMapping("/my")
     public ResponseEntity<ApiResponse<List<DiscussionPostResponse>>> getMyPosts(@AuthenticationPrincipal User user) {
         List<DiscussionPostResponse> discussionPostResponses = discussionPostService.getMyPosts(user);
         return ResponseEntity.ok(ApiResponse.success(discussionPostResponses, "토론글을 조회했습니다.", HttpStatus.OK));
     }
 
+    // 토론글 수정
     @PutMapping("/{postId}")
     public ResponseEntity<ApiResponse<DiscussionPostResponse>> updatePost(
             @AuthenticationPrincipal User user,
@@ -64,6 +69,7 @@ public class DiscussionPostController {
         return ResponseEntity.ok(ApiResponse.success(discussionPostResponse, "토론글이 수정되었습니다.", HttpStatus.OK));
     }
 
+    // 토론글 삭제
     @DeleteMapping("/{postId}")
     public ResponseEntity<ApiResponse<Void>> deletePost(
             @AuthenticationPrincipal User user,
@@ -73,6 +79,7 @@ public class DiscussionPostController {
         return ResponseEntity.ok(ApiResponse.success(null, "토론글이 삭제되었습니다.", HttpStatus.OK));
     }
 
+    // 토론글 투표 (찬성 / 반대)
     @PostMapping("/{postId}/vote")
     public ResponseEntity<ApiResponse<VoteResponse>> vote(
             @AuthenticationPrincipal User user,
@@ -83,6 +90,7 @@ public class DiscussionPostController {
         return ResponseEntity.ok(ApiResponse.success(voteResponse, "투표가 완료되었습니다.", HttpStatus.OK));
     }
 
+    // 토론글 투표 취소
     @DeleteMapping("/{postId}/vote")
     public ResponseEntity<ApiResponse<Void>> cancelVote(
             @AuthenticationPrincipal User user,
@@ -92,6 +100,7 @@ public class DiscussionPostController {
         return ResponseEntity.ok(ApiResponse.success(null, "투표가 취소되었습니다.", HttpStatus.OK));
     }
 
+    // 내 투표 상태 확인
     @GetMapping("/{postId}/vote")
     public ResponseEntity<ApiResponse<VoteStatusResponse>> getVoteStatus(
             @AuthenticationPrincipal User user,

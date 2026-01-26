@@ -36,6 +36,7 @@ public class OpinionService {
                 .content(opinionCreateDto.getContent())
                 .stance(opinionCreateDto.getOpinionStance())
                 .likeCount(0L)
+                .dislikeCount(0L)
                 .build();
 
         Opinion savedOpinion = opinionRepository.save(opinion);

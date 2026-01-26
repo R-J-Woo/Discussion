@@ -18,6 +18,7 @@ public class UserController {
 
     private final UserService userService;
 
+    // 회원가입
     @PostMapping("/signup")
     public ResponseEntity<ApiResponse<Void>> signUp(@Valid @RequestBody UserSignUpDto userSignUpDto) {
         userService.signup(userSignUpDto);
@@ -26,6 +27,7 @@ public class UserController {
                 .body(ApiResponse.success(null, "회원가입이 완료되었습니다.", HttpStatus.CREATED));
     }
 
+    // 로그인
     @PostMapping("/login")
     public ResponseEntity<ApiResponse<String>> login(@Valid @RequestBody UserLoginDto userLoginDto) {
         String token = userService.login(userLoginDto);
