@@ -38,7 +38,11 @@ public class SecurityConfig {
                         .requestMatchers(
                                 "/api/users/signup",    // 회원가입
                                 "/api/users/login",     // 로그인
-                                "/oauth2/**"
+                                "/oauth2/**",
+                                // Swagger UI 관련 경로
+                                "/swagger-ui/**",
+                                "/v3/api-docs/**",
+                                "/swagger-resources/**"
                         ).permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/discussions").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/discussions/{postId:[0-9]+}").permitAll()
