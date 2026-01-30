@@ -15,10 +15,10 @@ public record VoteResponse(
         LocalDateTime createdAt,
         LocalDateTime updatedAt
 ) {
-    public static VoteResponse from(DiscussionVote vote) {
+    public static VoteResponse from(DiscussionVote vote, Long discussionId) {
         return new VoteResponse(
                 vote.getId(),
-                vote.getDiscussionPost().getId(),
+                discussionId,
                 vote.getVoteType(),
                 vote.getCreatedAt(),
                 vote.getUpdatedAt()

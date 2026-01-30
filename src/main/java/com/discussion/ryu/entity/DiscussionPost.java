@@ -42,10 +42,10 @@ public class DiscussionPost {
     @Column(nullable = false)
     private Long disagreeCount = 0L;
 
-    @OneToMany(mappedBy = "discussionPost", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "discussionPost", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<DiscussionVote> votes = new ArrayList<>();
 
-    @OneToMany(mappedBy = "discussionPost", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "discussionPost", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<Opinion> opinions = new ArrayList<>();
 
     @CreationTimestamp

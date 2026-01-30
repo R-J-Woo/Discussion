@@ -56,7 +56,7 @@ public class DiscussionVoteService {
         DiscussionVote savedVote = discussionVoteRepository.save(discussionVote);
         discussionPostRepository.save(discussionPost);
 
-        return VoteResponse.from(savedVote);
+        return VoteResponse.from(savedVote, discussionPost.getId());
     }
 
     @Transactional
@@ -65,7 +65,7 @@ public class DiscussionVoteService {
 
         // 이전과 같은 타입이면 그대로 반환
         if (beforeType == newVoteType) {
-            return VoteResponse.from(vote);
+            return VoteResponse.from(vote, discussionPost.getId());
         }
 
         vote.changeVoteType(newVoteType);
@@ -78,7 +78,7 @@ public class DiscussionVoteService {
             discussionPost.decrementDisagreeCount();
         }
 
-        return VoteResponse.from(vote);
+        return VoteResponse.from(vote, discussionPost.getId());
     }
 
     @Transactional
