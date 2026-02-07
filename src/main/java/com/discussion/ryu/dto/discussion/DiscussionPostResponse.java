@@ -4,11 +4,13 @@ import com.discussion.ryu.dto.opinion.OpinionResponse;
 import com.discussion.ryu.dto.user.UserInfoResponse;
 import com.discussion.ryu.entity.DiscussionPost;
 import com.discussion.ryu.entity.User;
+import lombok.Builder;
 import org.springframework.data.domain.Page;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
+@Builder
 public record DiscussionPostResponse(
         Long id,
         String title,

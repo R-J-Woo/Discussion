@@ -3,9 +3,11 @@ package com.discussion.ryu.dto.opinion;
 import com.discussion.ryu.entity.Opinion;
 import com.discussion.ryu.entity.OpinionStance;
 import com.discussion.ryu.entity.ReactionType;
+import lombok.Builder;
 
 import java.time.LocalDateTime;
 
+@Builder
 public record OpinionResponse(
         Long id,
         String content,

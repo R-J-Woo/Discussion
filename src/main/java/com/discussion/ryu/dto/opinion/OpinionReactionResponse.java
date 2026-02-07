@@ -2,8 +2,10 @@ package com.discussion.ryu.dto.opinion;
 
 import com.discussion.ryu.entity.Opinion;
 import com.discussion.ryu.entity.ReactionType;
+import lombok.Builder;
 import lombok.Getter;
 
+@Builder
 public record OpinionReactionResponse(
         Long opinionId,
         Long likeCount,
