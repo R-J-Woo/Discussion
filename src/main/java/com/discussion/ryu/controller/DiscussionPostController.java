@@ -2,12 +2,9 @@ package com.discussion.ryu.controller;
 
 import com.discussion.ryu.dto.ApiResponse;
 import com.discussion.ryu.dto.discussion.*;
-import com.discussion.ryu.dto.user.*;
-import com.discussion.ryu.entity.DiscussionPost;
 import com.discussion.ryu.entity.User;
 import com.discussion.ryu.service.DiscussionPostService;
 import com.discussion.ryu.service.DiscussionVoteService;
-import com.discussion.ryu.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -23,8 +20,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-
 @Tag(name = "토론글", description = "토론글 관련 API")
 @RestController
 @RequiredArgsConstructor
@@ -33,6 +28,11 @@ public class DiscussionPostController {
 
     private final DiscussionPostService discussionPostService;
     private final DiscussionVoteService discussionVoteService;
+
+    @GetMapping("/hello")
+    public String hello() {
+        return "hello";
+    }
 
     @Operation(summary = "토론글 등록", description = "새로운 토론 주제를 등록합니다.")
     @ApiResponses({
