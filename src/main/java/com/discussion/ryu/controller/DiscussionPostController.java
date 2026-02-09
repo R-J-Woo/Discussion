@@ -29,11 +29,6 @@ public class DiscussionPostController {
     private final DiscussionPostService discussionPostService;
     private final DiscussionVoteService discussionVoteService;
 
-    @GetMapping("/hello")
-    public String hello() {
-        return "hello";
-    }
-
     @Operation(summary = "토론글 등록", description = "새로운 토론 주제를 등록합니다.")
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
