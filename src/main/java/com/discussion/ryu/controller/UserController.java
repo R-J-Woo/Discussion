@@ -25,7 +25,7 @@ public class UserController {
 
     @GetMapping("/hello")
     public String hello() {
-        return "hello";
+        return "hello ver2";
     }
 
     @Operation(summary = "회원가입", description = "새로운 사용자를 등록합니다.")
