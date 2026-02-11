@@ -42,9 +42,11 @@ public class Opinion {
     @Column(nullable = false)
     private OpinionStance stance;
 
+    @Builder.Default
     @Column(nullable = false)
     private Long likeCount = 0L;
 
+    @Builder.Default
     @Column(nullable = false)
     private Long dislikeCount = 0L;
 

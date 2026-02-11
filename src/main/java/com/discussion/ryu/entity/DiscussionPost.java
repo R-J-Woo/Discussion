@@ -36,15 +36,19 @@ public class DiscussionPost {
     @JoinColumn(name = "user_id")
     private User author;
 
+    @Builder.Default
     @Column(nullable = false)
     private Long agreeCount = 0L;
 
+    @Builder.Default
     @Column(nullable = false)
     private Long disagreeCount = 0L;
 
+    @Builder.Default
     @OneToMany(mappedBy = "discussionPost", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<DiscussionVote> votes = new ArrayList<>();
 
+    @Builder.Default
     @OneToMany(mappedBy = "discussionPost", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<Opinion> opinions = new ArrayList<>();
 

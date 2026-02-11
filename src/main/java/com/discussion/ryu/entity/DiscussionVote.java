@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 @Table(
         name = "discussion_votes",
         uniqueConstraints = {
-                @UniqueConstraint(columnNames = {"user_id", "discussion_post_id"})  // 한 사용자당 한 토론글에 1표만
+                @UniqueConstraint(columnNames = {"user_id", "post_id"})  // 한 사용자당 한 토론글에 1표만
         }
 )
 @Getter
