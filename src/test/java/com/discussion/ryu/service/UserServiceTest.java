@@ -11,9 +11,9 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
+import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import java.util.Optional;
 
@@ -21,6 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.*;
 
@@ -28,13 +29,13 @@ import static org.mockito.Mockito.*;
 @DisplayName("UserService 테스트")
 class UserServiceTest {
 
-    @MockitoBean
+    @Mock
     private UserRepository userRepository;
 
-    @MockitoBean
+    @Mock
     private PasswordEncoder passwordEncoder;
 
-    @MockitoBean
+    @Mock
     private JwtTokenProvider jwtTokenProvider;
 
     @InjectMocks
@@ -57,6 +58,7 @@ class UserServiceTest {
         // given
         given(userRepository.existsByUsername(anyString())).willReturn(false);
         given(userRepository.existsByName(anyString())).willReturn(false);
+        given(userRepository.existsByEmail(anyString())).willReturn(false);
         given(passwordEncoder.encode(anyString())).willReturn("encodedPassword");
         given(userRepository.save(any(User.class))).willReturn(testUser);
 
@@ -66,6 +68,7 @@ class UserServiceTest {
         // then
         verify(userRepository, times(1)).existsByUsername("testuser123");
         verify(userRepository, times(1)).existsByName("테스트유저");
+        verify(userRepository, times(1)).existsByEmail("test@example.com");
         verify(passwordEncoder, times(1)).encode("password123");
         verify(userRepository, times(1)).save(any(User.class));
     }
@@ -82,6 +85,9 @@ class UserServiceTest {
                 .hasMessage("이미 존재하는 아이디입니다.");
 
         verify(userRepository, times(1)).existsByUsername("testuser123");
+        verify(userRepository, never()).existsByName(anyString());
+        verify(userRepository, never()).existsByEmail(anyString());
+        verify(passwordEncoder, never()).encode(anyString());
         verify(userRepository, never()).save(any(User.class));
     }
 
@@ -97,7 +103,30 @@ class UserServiceTest {
                 .isInstanceOf(DuplicateNameException.class)
                 .hasMessage("이미 존재하는 닉네임입니다.");
 
+        verify(userRepository, times(1)).existsByUsername("testuser123");
         verify(userRepository, times(1)).existsByName("테스트유저");
+        verify(userRepository, never()).existsByEmail(anyString());
+        verify(passwordEncoder, never()).encode(anyString());
+        verify(userRepository, never()).save(any(User.class));
+    }
+
+    @Test
+    @DisplayName("회원가입 실패 - 중복된 이메일")
+    void signup_Fail_DuplicateEmail() {
+        // given
+        given(userRepository.existsByUsername(anyString())).willReturn(false);
+        given(userRepository.existsByName(anyString())).willReturn(false);
+        given(userRepository.existsByEmail(anyString())).willReturn(true);
+
+        // when & then
+        assertThatThrownBy(() -> userService.signup(signUpDto))
+                .isInstanceOf(DuplicateEmailException.class)
+                .hasMessage("이미 존재하는 이메일입니다.");
+
+        verify(userRepository, times(1)).existsByUsername("testuser123");
+        verify(userRepository, times(1)).existsByName("테스트유저");
+        verify(userRepository, times(1)).existsByEmail("test@example.com");
+        verify(passwordEncoder, never()).encode(anyString());
         verify(userRepository, never()).save(any(User.class));
     }
 
@@ -130,7 +159,9 @@ class UserServiceTest {
                 .isInstanceOf(AuthenticationFailedException.class)
                 .hasMessage("아이디 또는 비밀번호가 틀렸습니다.");
 
+        verify(userRepository, times(1)).findByUsername("testuser123");
         verify(passwordEncoder, never()).matches(anyString(), anyString());
+        verify(jwtTokenProvider, never()).createToken(anyLong(), anyString());
     }
 
     @Test
@@ -145,6 +176,8 @@ class UserServiceTest {
                 .isInstanceOf(AuthenticationFailedException.class)
                 .hasMessage("아이디 또는 비밀번호가 틀렸습니다.");
 
+        verify(userRepository, times(1)).findByUsername("testuser123");
+        verify(passwordEncoder, times(1)).matches("password123", "encodedPassword");
         verify(jwtTokenProvider, never()).createToken(anyLong(), anyString());
     }
 
@@ -155,9 +188,11 @@ class UserServiceTest {
         UserInfoResponse response = userService.getMyInfo(testUser);
 
         // then
+        assertThat(response).isNotNull();
         assertThat(response.username()).isEqualTo("testuser123");
         assertThat(response.name()).isEqualTo("테스트유저");
         assertThat(response.email()).isEqualTo("test@example.com");
+        assertThat(response.provider()).isEqualTo(AuthProvider.LOCAL);
     }
 
     @Test
@@ -174,6 +209,9 @@ class UserServiceTest {
         UserInfoResponse response = userService.updateMyInfo(testUser, updateDto);
 
         // then
+        assertThat(response).isNotNull();
+        assertThat(response.username()).isEqualTo("testuser123");
+        assertThat(response.provider()).isEqualTo(AuthProvider.LOCAL);
         verify(userRepository, times(1)).existsByNameAndUserIdNot("수정된이름", 1L);
         verify(userRepository, times(1)).existsByEmailAndUserIdNot("updated@example.com", 1L);
         verify(userRepository, times(1)).save(testUser);
@@ -192,6 +230,8 @@ class UserServiceTest {
                 .isInstanceOf(DuplicateNameException.class)
                 .hasMessage("이미 존재하는 닉네임입니다.");
 
+        verify(userRepository, times(1)).existsByNameAndUserIdNot("중복된이름", 1L);
+        verify(userRepository, never()).existsByEmailAndUserIdNot(anyString(), anyLong());
         verify(userRepository, never()).save(any(User.class));
     }
 
@@ -209,6 +249,8 @@ class UserServiceTest {
                 .isInstanceOf(DuplicateEmailException.class)
                 .hasMessage("이미 존재하는 이메일입니다.");
 
+        verify(userRepository, times(1)).existsByNameAndUserIdNot("수정된이름", 1L);
+        verify(userRepository, times(1)).existsByEmailAndUserIdNot("duplicate@example.com", 1L);
         verify(userRepository, never()).save(any(User.class));
     }
 
@@ -230,6 +272,7 @@ class UserServiceTest {
 
         // then
         verify(passwordEncoder, times(1)).matches("password123", "encodedPassword");
+        verify(passwordEncoder, times(1)).matches("newPassword123", "encodedPassword");
         verify(passwordEncoder, times(1)).encode("newPassword123");
         verify(userRepository, times(1)).save(testUser);
     }
@@ -249,6 +292,8 @@ class UserServiceTest {
                 .isInstanceOf(InvalidCurrentPasswordException.class)
                 .hasMessage("현재 비밀번호가 일치하지 않습니다.");
 
+        verify(passwordEncoder, times(1)).matches("wrongPassword", "encodedPassword");
+        verify(passwordEncoder, never()).encode(anyString());
         verify(userRepository, never()).save(any(User.class));
     }
 
@@ -267,6 +312,8 @@ class UserServiceTest {
                 .isInstanceOf(PasswordConfirmationMismatchException.class)
                 .hasMessage("새 비밀번호가 서로 일치하지 않습니다.");
 
+        verify(passwordEncoder, times(1)).matches("password123", "encodedPassword");
+        verify(passwordEncoder, never()).encode(anyString());
         verify(userRepository, never()).save(any(User.class));
     }
 
@@ -285,6 +332,7 @@ class UserServiceTest {
                 .isInstanceOf(PasswordNotChangedException.class)
                 .hasMessage("기존 비밀번호와 다른 비밀번호를 사용해주세요.");
 
+        verify(passwordEncoder, times(2)).matches("password123", "encodedPassword");
         verify(userRepository, never()).save(any(User.class));
     }
 
@@ -296,6 +344,37 @@ class UserServiceTest {
 
         // then
         verify(userRepository, times(1)).delete(testUser);
+    }
+
+    @Test
+    @DisplayName("회원 탈퇴 실패 - 이미 탈퇴한 사용자")
+    void deleteMyInfo_Fail_AlreadyDeleted() {
+        // given
+        User deletedUser = User.builder()
+                .userId(1L)
+                .username("testuser123")
+                .password("encodedPassword")
+                .name("테스트유저")
+                .email("test@example.com")
+                .provider(AuthProvider.LOCAL)
+                .providerId("testuser123")
+                .build();
+        
+        // deletedAt 설정을 위해 reflection 사용
+        try {
+            java.lang.reflect.Field deletedAtField = User.class.getDeclaredField("deletedAt");
+            deletedAtField.setAccessible(true);
+            deletedAtField.set(deletedUser, java.time.LocalDateTime.now());
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
+        // when & then
+        assertThatThrownBy(() -> userService.deleteMyInfo(deletedUser))
+                .isInstanceOf(AlreadyDeletedUserException.class)
+                .hasMessage("이미 탈퇴한 사용자입니다.");
+
+        verify(userRepository, never()).delete(any(User.class));
     }
 
     /**
