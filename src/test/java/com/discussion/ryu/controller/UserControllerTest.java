@@ -72,8 +72,10 @@ class UserControllerTest {
                         .content(objectMapper.writeValueAsString(signUpDto)))
                 .andDo(print())
                 .andExpect(status().isCreated())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.message").value("회원가입이 완료되었습니다."));
+                .andExpect(jsonPath("$.message").value("회원가입이 완료되었습니다."))
+                .andExpect(jsonPath("$.data").doesNotExist());
 
         verify(userService, times(1)).signup(any(UserSignUpDto.class));
     }
@@ -122,7 +124,77 @@ class UserControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(signUpDto)))
                 .andDo(print())
-                .andExpect(status().isConflict());
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.message").value("이미 존재하는 아이디입니다."));
+    }
+
+    @Test
+    @DisplayName("회원가입 실패 - 중복된 이메일")
+    void signUp_Fail_DuplicateEmail() throws Exception {
+        // given
+        doThrow(new DuplicateEmailException("이미 존재하는 이메일입니다."))
+                .when(userService).signup(any(UserSignUpDto.class));
+
+        // when & then
+        mockMvc.perform(post("/api/users/signup")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(signUpDto)))
+                .andDo(print())
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.message").value("이미 존재하는 이메일입니다."));
+    }
+
+    @Test
+    @DisplayName("회원가입 실패 - 중복된 닉네임")
+    void signUp_Fail_DuplicateName() throws Exception {
+        // given
+        doThrow(new DuplicateNameException("이미 존재하는 닉네임입니다."))
+                .when(userService).signup(any(UserSignUpDto.class));
+
+        // when & then
+        mockMvc.perform(post("/api/users/signup")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(signUpDto)))
+                .andDo(print())
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.message").value("이미 존재하는 닉네임입니다."));
+    }
+
+    @Test
+    @DisplayName("회원가입 실패 - 유효성 검증 실패 (짧은 비밀번호)")
+    void signUp_Fail_ValidationError_ShortPassword() throws Exception {
+        // given
+        UserSignUpDto invalidDto = createSignUpDto("testuser123", "short", "테스트유저", "test@example.com");
+
+        // when & then
+        mockMvc.perform(post("/api/users/signup")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(invalidDto)))
+                .andDo(print())
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false));
+
+        verify(userService, never()).signup(any(UserSignUpDto.class));
+    }
+
+    @Test
+    @DisplayName("회원가입 실패 - 유효성 검증 실패 (null 값)")
+    void signUp_Fail_ValidationError_NullValues() throws Exception {
+        // given
+        UserSignUpDto invalidDto = createSignUpDto(null, null, null, null);
+
+        // when & then
+        mockMvc.perform(post("/api/users/signup")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(invalidDto)))
+                .andDo(print())
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false));
+
+        verify(userService, never()).signup(any(UserSignUpDto.class));
     }
 
     @Test
@@ -139,6 +211,7 @@ class UserControllerTest {
                         .content(objectMapper.writeValueAsString(loginDto)))
                 .andDo(print())
                 .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data").value(expectedToken))
                 .andExpect(jsonPath("$.message").value("로그인에 성공했습니다."));
@@ -159,7 +232,26 @@ class UserControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(loginDto)))
                 .andDo(print())
-                .andExpect(status().isUnauthorized());
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.message").value("아이디 또는 비밀번호가 틀렸습니다."));
+    }
+
+    @Test
+    @DisplayName("로그인 실패 - 유효성 검증 실패")
+    void login_Fail_ValidationError() throws Exception {
+        // given
+        UserLoginDto invalidDto = createLoginDto(null, null);
+
+        // when & then
+        mockMvc.perform(post("/api/users/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(invalidDto)))
+                .andDo(print())
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false));
+
+        verify(userService, never()).login(any(UserLoginDto.class));
     }
 
     @Test
@@ -180,9 +272,12 @@ class UserControllerTest {
                         .with(user(testUser)))
                 .andDo(print())
                 .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.username").value("testuser123"))
                 .andExpect(jsonPath("$.data.name").value("테스트유저"))
+                .andExpect(jsonPath("$.data.email").value("test@example.com"))
+                .andExpect(jsonPath("$.data.provider").value("LOCAL"))
                 .andExpect(jsonPath("$.message").value("내 정보 조회에 성공하였습니다."));
     }
 
@@ -210,9 +305,12 @@ class UserControllerTest {
                         .content(objectMapper.writeValueAsString(updateDto)))
                 .andDo(print())
                 .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.username").value("testuser123"))
                 .andExpect(jsonPath("$.data.name").value("수정된이름"))
                 .andExpect(jsonPath("$.data.email").value("updated@example.com"))
+                .andExpect(jsonPath("$.data.provider").value("LOCAL"))
                 .andExpect(jsonPath("$.message").value("내 정보 수정에 성공하였습니다."));
     }
 
@@ -232,7 +330,49 @@ class UserControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(updateDto)))
                 .andDo(print())
-                .andExpect(status().isConflict());
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.message").value("이미 존재하는 닉네임입니다."));
+    }
+
+    @Test
+    @DisplayName("내 정보 수정 실패 - 중복된 이메일")
+    void updateMyInfo_Fail_DuplicateEmail() throws Exception {
+        // given
+        UpdateUserInfoDto updateDto = createUpdateUserInfoDto("새이름", "duplicate@example.com");
+
+        given(userService.updateMyInfo(any(), any(UpdateUserInfoDto.class)))
+                .willThrow(new DuplicateEmailException("이미 존재하는 이메일입니다."));
+
+        // when & then
+        mockMvc.perform(put("/api/users/me")
+                        .with(csrf())
+                        .with(user(testUser))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(updateDto)))
+                .andDo(print())
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.message").value("이미 존재하는 이메일입니다."));
+    }
+
+    @Test
+    @DisplayName("내 정보 수정 실패 - 유효성 검증 실패")
+    void updateMyInfo_Fail_ValidationError() throws Exception {
+        // given
+        UpdateUserInfoDto invalidDto = createUpdateUserInfoDto(null, "invalid-email");
+
+        // when & then
+        mockMvc.perform(put("/api/users/me")
+                        .with(csrf())
+                        .with(user(testUser))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(invalidDto)))
+                .andDo(print())
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false));
+
+        verify(userService, never()).updateMyInfo(any(), any(UpdateUserInfoDto.class));
     }
 
     @Test
@@ -253,8 +393,10 @@ class UserControllerTest {
                         .content(objectMapper.writeValueAsString(passwordDto)))
                 .andDo(print())
                 .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.message").value("비밀번호가 변경되었습니다."));
+                .andExpect(jsonPath("$.message").value("비밀번호가 변경되었습니다."))
+                .andExpect(jsonPath("$.data").doesNotExist());
     }
 
     @Test
@@ -275,7 +417,51 @@ class UserControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(passwordDto)))
                 .andDo(print())
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.message").value("현재 비밀번호가 일치하지 않습니다."));
+    }
+
+    @Test
+    @DisplayName("비밀번호 변경 실패 - 새 비밀번호 불일치")
+    void updatePassword_Fail_PasswordConfirmationMismatch() throws Exception {
+        // given
+        UpdateUserPasswordDto passwordDto = createUpdatePasswordDto(
+                "password123", "newPassword123", "differentPassword123"
+        );
+
+        doThrow(new PasswordConfirmationMismatchException("새 비밀번호가 일치하지 않습니다."))
+                .when(userService).updatePassword(any(), any(UpdateUserPasswordDto.class));
+
+        // when & then
+        mockMvc.perform(put("/api/users/me/password")
+                        .with(csrf())
+                        .with(user(testUser))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(passwordDto)))
+                .andDo(print())
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.message").value("새 비밀번호가 일치하지 않습니다."));
+    }
+
+    @Test
+    @DisplayName("비밀번호 변경 실패 - 유효성 검증 실패")
+    void updatePassword_Fail_ValidationError() throws Exception {
+        // given
+        UpdateUserPasswordDto invalidDto = createUpdatePasswordDto(null, "short", "short");
+
+        // when & then
+        mockMvc.perform(put("/api/users/me/password")
+                        .with(csrf())
+                        .with(user(testUser))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(invalidDto)))
+                .andDo(print())
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false));
+
+        verify(userService, never()).updatePassword(any(), any(UpdateUserPasswordDto.class));
     }
 
     @Test
@@ -290,8 +476,10 @@ class UserControllerTest {
                         .with(user(testUser)))
                 .andDo(print())
                 .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.message").value("사용자 탈퇴가 완료되었습니다."));
+                .andExpect(jsonPath("$.message").value("사용자 탈퇴가 완료되었습니다."))
+                .andExpect(jsonPath("$.data").doesNotExist());
 
         verify(userService, times(1)).deleteMyInfo(any());
     }
