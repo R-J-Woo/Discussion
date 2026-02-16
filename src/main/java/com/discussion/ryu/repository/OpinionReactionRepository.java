@@ -12,4 +12,9 @@ import java.util.Optional;
 public interface OpinionReactionRepository extends JpaRepository<OpinionReaction, Long> {
 
     Optional<OpinionReaction> findByUserAndOpinion(User user, Opinion opinion);
+    
+    // 동시성 테스트를 위한 카운트 메서드
+    long countByOpinion(Opinion opinion);
+    
+    long countByOpinionAndUser(Opinion opinion, User user);
 }

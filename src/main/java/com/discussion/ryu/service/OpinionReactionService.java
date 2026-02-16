@@ -40,13 +40,13 @@ public class OpinionReactionService {
 
             if (reaction.getReactionType() == requestType) {
                 // 현재 reactionType과 동일한 버튼을 눌렀으면 취소
-                handleReactionRemove(opinion, reaction);
+                handleReactionRemove(opinionId, reaction);
                 opinionReactionRepository.delete(reaction);
                 message = requestType == ReactionType.LIKE ? "좋아요를 취소했습니다." : "싫어요를 취소했습니다.";
                 resultReaction = null;
             } else {
                 // 현재 reactionType과 다른 버튼을 눌렀으면 변경
-                handleReactionChange(opinion, reaction.getReactionType(), requestType);
+                handleReactionChange(opinionId, reaction.getReactionType(), requestType);
                 reaction.changeReactionType(requestType);
                 opinionReactionRepository.save(reaction);
                 message = requestType == ReactionType.LIKE ? "좋아요로 변경했습니다." : "싫어요로 변경했습니다.";
@@ -61,7 +61,7 @@ public class OpinionReactionService {
                     .reactionType(requestType)
                     .build();
             opinionReactionRepository.save(reaction);
-            handleReactionAddition(opinion, requestType);
+            handleReactionAddition(opinionId, requestType);
             message = requestType == ReactionType.LIKE ? "좋아요를 눌렀습니다." : "싫어요를 눌렀습니다.";
             resultReaction = requestType;
         }
@@ -71,37 +71,32 @@ public class OpinionReactionService {
     }
 
     // 반응 추가 처리
-    public void handleReactionAddition(Opinion opinion, ReactionType reactionType) {
+    public void handleReactionAddition(Long opinionId, ReactionType reactionType) {
         if (reactionType == ReactionType.LIKE) {
-            opinion.incrementLikeCount();
+            opinionRepository.incrementLikeCount(opinionId);
         } else {
-            opinion.incrementDislikeCount();
+            opinionRepository.incrementDislikeCount(opinionId);
         }
     }
 
     // 반응 제거 처리
-    public void handleReactionRemove(Opinion opinion, OpinionReaction reaction) {
+    public void handleReactionRemove(Long opinionId, OpinionReaction reaction) {
         if (reaction.getReactionType() == ReactionType.LIKE) {
-            opinion.decrementLikeCount();
+            opinionRepository.decrementLikeCount(opinionId);
         } else {
-            opinion.decrementDislikeCount();
+            opinionRepository.decrementDislikeCount(opinionId);
         }
     }
 
     // 반응 변경 처리
-    public void handleReactionChange(Opinion opinion, ReactionType oldType, ReactionType newType) {
-        // 기존 타입 카운트 감소
+    public void handleReactionChange(Long opinionId, ReactionType oldType, ReactionType newType) {
+        // 기존 타입 카운트 감소, 새 카운트 증가
         if (oldType == ReactionType.LIKE) {
-            opinion.decrementLikeCount();
+            opinionRepository.decrementLikeCount(opinionId);
+            opinionRepository.incrementDislikeCount(opinionId);
         } else {
-            opinion.decrementDislikeCount();
-        }
-
-        // 새 타입의 카운트 증가
-        if (newType == ReactionType.LIKE) {
-            opinion.incrementLikeCount();
-        } else {
-            opinion.incrementDislikeCount();
+            opinionRepository.decrementDislikeCount(opinionId);
+            opinionRepository.incrementLikeCount(opinionId);
         }
     }
 
