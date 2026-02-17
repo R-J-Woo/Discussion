@@ -6,17 +6,12 @@ import com.discussion.ryu.entity.DiscussionVote;
 import com.discussion.ryu.entity.User;
 import com.discussion.ryu.entity.VoteType;
 import com.discussion.ryu.exception.discussion.DiscussionPostNotFoundException;
-import com.discussion.ryu.exception.discussion.UserNotAuthorException;
 import com.discussion.ryu.repository.DiscussionPostRepository;
 import com.discussion.ryu.repository.DiscussionVoteRepository;
-import com.discussion.ryu.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -33,14 +28,13 @@ public class DiscussionVoteService {
 
         Optional<DiscussionVote> existingVote = discussionVoteRepository.findByUserAndDiscussionPost(user, discussionPost);
         if (existingVote.isPresent()) {
-            return changeVote(existingVote.get(), voteRequestDto.getVoteType(), discussionPost);
+            return changeVote(existingVote.get(), voteRequestDto.getVoteType(), postId);
         } else {
             return createVote(user, discussionPost, voteRequestDto.getVoteType());
         }
     }
 
-    @Transactional
-    public VoteResponse createVote(User user, DiscussionPost discussionPost, VoteType voteType) {
+    private VoteResponse createVote(User user, DiscussionPost discussionPost, VoteType voteType) {
         DiscussionVote discussionVote = DiscussionVote.builder()
                 .user(user)
                 .discussionPost(discussionPost)
@@ -48,37 +42,35 @@ public class DiscussionVoteService {
                 .build();
 
         if (voteType == VoteType.AGREE) {
-            discussionPost.incrementAgreeCount();
+            discussionPostRepository.incrementAgreeCount(discussionPost.getId());
         } else {
-            discussionPost.incrementDisagreeCount();
+            discussionPostRepository.incrementDisagreeCount(discussionPost.getId());
         }
 
         DiscussionVote savedVote = discussionVoteRepository.save(discussionVote);
-        discussionPostRepository.save(discussionPost);
 
         return VoteResponse.from(savedVote, discussionPost.getId());
     }
 
-    @Transactional
-    public VoteResponse changeVote(DiscussionVote vote, VoteType newVoteType, DiscussionPost discussionPost) {
+    private VoteResponse changeVote(DiscussionVote vote, VoteType newVoteType, Long postId) {
         VoteType beforeType = vote.getVoteType();
 
         // 이전과 같은 타입이면 그대로 반환
         if (beforeType == newVoteType) {
-            return VoteResponse.from(vote, discussionPost.getId());
+            return VoteResponse.from(vote, postId);
         }
 
         vote.changeVoteType(newVoteType);
 
         if (beforeType == VoteType.AGREE) {
-            discussionPost.decrementAgreeCount();
-            discussionPost.incrementDisagreeCount();
+            discussionPostRepository.decrementAgreeCount(postId);
+            discussionPostRepository.incrementDisagreeCount(postId);
         } else {
-            discussionPost.incrementAgreeCount();
-            discussionPost.decrementDisagreeCount();
+            discussionPostRepository.incrementAgreeCount(postId);
+            discussionPostRepository.decrementDisagreeCount(postId);
         }
 
-        return VoteResponse.from(vote, discussionPost.getId());
+        return VoteResponse.from(vote, postId);
     }
 
     @Transactional
@@ -90,9 +82,9 @@ public class DiscussionVoteService {
                 .orElseThrow(() -> new IllegalArgumentException("투표 기록이 없습니다."));
 
         if (vote.getVoteType() == VoteType.AGREE) {
-            post.decrementAgreeCount();
+            discussionPostRepository.decrementAgreeCount(postId);
         } else {
-            post.decrementDisagreeCount();
+            discussionPostRepository.decrementDisagreeCount(postId);
         }
 
         discussionVoteRepository.delete(vote);

@@ -66,24 +66,4 @@ public class DiscussionPost {
         this.title = title;
         this.content = content;
     }
-
-    public void incrementAgreeCount() {
-        this.agreeCount++;
-    }
-
-    public void incrementDisagreeCount() {
-        this.disagreeCount++;
-    }
-
-    public void decrementAgreeCount() {
-        if (this.agreeCount > 0) {
-            this.agreeCount--;
-        }
-    }
-
-    public void decrementDisagreeCount() {
-        if (this.disagreeCount > 0) {
-            this.disagreeCount--;
-        }
-    }
 }

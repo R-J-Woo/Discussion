@@ -66,8 +66,9 @@ public class OpinionReactionService {
             resultReaction = requestType;
         }
 
-        opinionRepository.save(opinion);
-        return OpinionReactionResponse.from(opinion, resultReaction, message);
+        // 원자적 쿼리로 업데이트된 최신 opinion을 다시 조회해서 응답
+        Opinion updatedOpinion = opinionRepository.findById(opinionId).orElseThrow();
+        return OpinionReactionResponse.from(updatedOpinion, resultReaction, message);
     }
 
     // 반응 추가 처리

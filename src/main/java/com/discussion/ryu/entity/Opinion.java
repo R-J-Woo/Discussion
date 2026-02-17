@@ -64,24 +64,4 @@ public class Opinion {
         this.content = content;
         this.stance = stance;
     }
-
-    public void incrementLikeCount() {
-        this.likeCount++;
-    }
-
-    public void incrementDislikeCount() {
-        this.dislikeCount++;
-    }
-
-    public void decrementLikeCount() {
-        if (this.likeCount > 0) {
-            this.likeCount--;
-        }
-    }
-
-    public void decrementDislikeCount() {
-        if (this.dislikeCount > 0) {
-            this.dislikeCount--;
-        }
-    }
 }
