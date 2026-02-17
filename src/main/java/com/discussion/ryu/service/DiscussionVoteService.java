@@ -6,6 +6,7 @@ import com.discussion.ryu.entity.DiscussionVote;
 import com.discussion.ryu.entity.User;
 import com.discussion.ryu.entity.VoteType;
 import com.discussion.ryu.exception.discussion.DiscussionPostNotFoundException;
+import com.discussion.ryu.exception.discussion.VoteNotFoundException;
 import com.discussion.ryu.repository.DiscussionPostRepository;
 import com.discussion.ryu.repository.DiscussionVoteRepository;
 import lombok.RequiredArgsConstructor;
@@ -79,7 +80,7 @@ public class DiscussionVoteService {
                 .orElseThrow(() -> new DiscussionPostNotFoundException("존재하지 않는 토론글입니다."));
 
         DiscussionVote vote = discussionVoteRepository.findByUserAndDiscussionPost(user, post)
-                .orElseThrow(() -> new IllegalArgumentException("투표 기록이 없습니다."));
+                .orElseThrow(() -> new VoteNotFoundException("투표 기록이 없습니다."));
 
         if (vote.getVoteType() == VoteType.AGREE) {
             discussionPostRepository.decrementAgreeCount(postId);

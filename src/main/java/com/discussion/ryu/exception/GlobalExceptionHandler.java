@@ -2,6 +2,8 @@ package com.discussion.ryu.exception;
 
 import com.discussion.ryu.dto.ApiResponse;
 import com.discussion.ryu.exception.discussion.DiscussionPostNotFoundException;
+import com.discussion.ryu.exception.discussion.UserNotAuthorException;
+import com.discussion.ryu.exception.discussion.VoteNotFoundException;
 import com.discussion.ryu.exception.opinion.OpinionNotFoundException;
 import com.discussion.ryu.exception.user.*;
 import org.springframework.http.HttpStatus;
@@ -20,7 +22,10 @@ public class GlobalExceptionHandler {
     }
 
     // 인증 실패 에러
-    @ExceptionHandler(AuthenticationFailedException.class)
+    @ExceptionHandler({
+            AuthenticationFailedException.class,
+            UserNotAuthorException.class
+    })
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
     public ApiResponse<Void> handleAuthenticationFailedException(AuthenticationFailedException e) {
         return ApiResponse.fail(e.getMessage(), HttpStatus.UNAUTHORIZED);
@@ -58,7 +63,8 @@ public class GlobalExceptionHandler {
     // 조회 실패 에러
     @ExceptionHandler({
             DiscussionPostNotFoundException.class,
-            OpinionNotFoundException.class
+            OpinionNotFoundException.class,
+            VoteNotFoundException.class
     })
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public ApiResponse<Void> handleNotFoundException(RuntimeException e) {
@@ -68,6 +74,6 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(RuntimeException.class)
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public ApiResponse<Void> handleRuntimeException(RuntimeException e) {
-        return ApiResponse.fail("서버 내부 오류가 발생했습니다." + e, HttpStatus.INTERNAL_SERVER_ERROR);
+        return ApiResponse.fail("서버 내부 오류가 발생했습니다." + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
     }
 }
