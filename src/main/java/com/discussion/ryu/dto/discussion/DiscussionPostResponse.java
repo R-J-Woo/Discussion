@@ -1,11 +1,14 @@
 package com.discussion.ryu.dto.discussion;
 
 import com.discussion.ryu.dto.opinion.OpinionResponse;
+import com.discussion.ryu.dto.user.UserInfoResponse;
 import com.discussion.ryu.entity.DiscussionPost;
+import com.discussion.ryu.entity.User;
 import lombok.Builder;
 import org.springframework.data.domain.Page;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Builder
 public record DiscussionPostResponse(
@@ -14,7 +17,6 @@ public record DiscussionPostResponse(
         String content,
         Long authorId,
         String authorName,
-        String authorUsername,
         Long agreeCount,
         Long disagreeCount,
         Page<OpinionResponse> opinions,
@@ -28,7 +30,6 @@ public record DiscussionPostResponse(
                 post.getContent(),
                 post.getAuthor().getUserId(),
                 post.getAuthor().getName(),
-                post.getAuthor().getUsername(),
                 post.getAgreeCount(),
                 post.getDisagreeCount(),
                 opinions,
@@ -44,7 +45,6 @@ public record DiscussionPostResponse(
                 post.getContent(),
                 post.getAuthor().getUserId(),
                 post.getAuthor().getName(),
-                post.getAuthor().getUsername(),
                 post.getAgreeCount(),
                 post.getDisagreeCount(),
                 Page.empty(),
