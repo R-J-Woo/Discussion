@@ -22,6 +22,11 @@ public class UserService {
 
     @Transactional
     public void signup(UserSignUpDto userSignUpDto) {
+        // 비밀번호 확인
+        if (!userSignUpDto.getPassword().equals(userSignUpDto.getPasswordConfirm())) {
+            throw new PasswordConfirmationMismatchException("비밀번호가 일치하지 않습니다.");
+        }
+
         if (userRepository.existsByUsername(userSignUpDto.getUsername())) {
             throw new DuplicateUsernameException("이미 존재하는 아이디입니다.");
         }
