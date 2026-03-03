@@ -35,4 +35,47 @@ public interface DiscussionPostRepository extends JpaRepository<DiscussionPost, 
     @Modifying
     @Query("UPDATE DiscussionPost p SET p.disagreeCount = p.disagreeCount - 1 WHERE p.id = :id AND p.disagreeCount > 0")
     void decrementDisagreeCount(@Param("id") Long id);
+
+    // 검색 기능
+    // keyword -> title & content
+    @Query("SELECT DISTINCT d FROM DiscussionPost d JOIN FETCH d.author " +
+            "WHERE (d.title LIKE %:keyword% OR d.content LIKE %:keyword%)")
+    Page<DiscussionPost> searchByKeyword(@Param("keyword") String keyword, Pageable pageable);
+
+    @Query("SELECT DISTINCT d FROM DiscussionPost d JOIN FETCH d.author " +
+            "WHERE d.title LIKE %:keyword%")
+    Page<DiscussionPost> searchByTitle(@Param("keyword") String keyword, Pageable pageable);
+
+    @Query("SELECT DISTINCT d FROM DiscussionPost d JOIN FETCH d.author " +
+            "WHERE d.content LIKE %:keyword%")
+    Page<DiscussionPost> searchByContent(@Param("keyword") String keyword, Pageable pageable);
+
+    @Query("SELECT DISTINCT d FROM DiscussionPost d JOIN FETCH d.author " +
+            "WHERE d.author.name LIKE %:authorName%")
+    Page<DiscussionPost> searchByAuthorName(@Param("authorName") String authorName, Pageable pageable);
+
+    @Query("SELECT DISTINCT d FROM DiscussionPost d JOIN FETCH d.author " +
+            "WHERE (d.title LIKE %:keyword% OR d.content LIKE %:keyword%) " +
+            "AND d.author.name LIKE %:authorName%")
+    Page<DiscussionPost> searchByKeywordAndAuthor(
+            @Param("keyword") String keyword,
+            @Param("authorName") String authorName,
+            Pageable pageable
+    );
+
+    @Query("SELECT DISTINCT d FROM DiscussionPost d JOIN FETCH d.author " +
+            "WHERE d.title LIKE %:keyword% AND d.author.name LIKE %:authorName%")
+    Page<DiscussionPost> searchByTitleAndAuthor(
+            @Param("keyword") String keyword,
+            @Param("authorName") String authorName,
+            Pageable pageable
+    );
+
+    @Query("SELECT DISTINCT d FROM DiscussionPost d JOIN FETCH d.author " +
+            "WHERE d.content LIKE %:keyword% AND d.author.name LIKE %:authorName%")
+    Page<DiscussionPost> searchByContentAndAuthor(
+            @Param("keyword") String keyword,
+            @Param("authorName") String authorName,
+            Pageable pageable
+    );
 }
