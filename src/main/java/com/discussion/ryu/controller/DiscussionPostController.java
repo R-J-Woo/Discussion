@@ -64,14 +64,12 @@ public class DiscussionPostController {
     })
     @GetMapping
     public ResponseEntity<ApiResponse<Page<DiscussionPostResponse>>> getAllPosts(
+            @Parameter(description = "정렬 기준 (LATEST, POPULAR, MOST_AGREED, MOST_DISAGREED)") 
+            @RequestParam(required = false, defaultValue = "LATEST") SortType sortType,
             @Parameter(description = "페이지 번호 (0부터 시작)", example = "0")
-            @PageableDefault(
-                    size = 20,
-                    sort = "createdAt",
-                    direction = Sort.Direction.DESC
-            ) Pageable pageable
+            @PageableDefault(size = 20) Pageable pageable
     ) {
-        Page<DiscussionPostResponse> discussionPostResponses = discussionPostService.getAllPosts(pageable);
+        Page<DiscussionPostResponse> discussionPostResponses = discussionPostService.getAllPosts(sortType, pageable);
         return ResponseEntity.ok(ApiResponse.success(discussionPostResponses, "토론글 목록을 조회하였습니다.", HttpStatus.OK));
     }
 
@@ -278,13 +276,9 @@ public class DiscussionPostController {
     public ResponseEntity<ApiResponse<Page<DiscussionPostResponse>>> searchPosts(
             DiscussionSearchDto searchDto,
             @Parameter(description = "페이지 번호 (0부터 시작)", example = "0")
-            @PageableDefault(
-                    size = 20,
-                    sort = "createdAt",
-                    direction = Sort.Direction.DESC
-            ) Pageable pageable
+            @PageableDefault(size = 20) Pageable pageable
     ) {
-        Page<DiscussionPostResponse> results = discussionPostService.searchPosts(searchDto, pageable);
-        return ResponseEntity.ok(ApiResponse.success(results, "토론글 검색이 완료되었습니다.", HttpStatus.OK));
+        Page<DiscussionPostResponse> posts = discussionPostService.searchPosts(searchDto, pageable);
+        return ResponseEntity.ok(ApiResponse.success(posts, "토론글 검색이 완료되었습니다.", HttpStatus.OK));
     }
 }

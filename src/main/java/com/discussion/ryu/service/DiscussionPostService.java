@@ -8,7 +8,9 @@ import com.discussion.ryu.exception.discussion.UserNotAuthorException;
 import com.discussion.ryu.repository.DiscussionPostRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -36,8 +38,9 @@ public class DiscussionPostService {
         return DiscussionPostResponse.from(savedPost);
     }
 
-    public Page<DiscussionPostResponse> getAllPosts(Pageable pageable) {
-        return discussionPostRepository.findAllWithAuthor(pageable)
+    public Page<DiscussionPostResponse> getAllPosts(SortType sortType, Pageable pageable) {
+        Pageable sortedPageable = createSortedPageable(sortType, pageable);
+        return discussionPostRepository.findAllWithAuthor(sortedPageable)
                 .map(DiscussionPostResponse::from);
     }
 
@@ -84,58 +87,100 @@ public class DiscussionPostService {
         String keyword = searchDto.getKeyword();
         String authorName = searchDto.getAuthorName();
         DiscussionSearchDto.SearchType searchType = searchDto.getSearchType();
+        SortType sortType = searchDto.getSortType();
+
+        // 정렬이 적용된 Pageable 생성
+        Pageable sortedPageable = createSortedPageable(sortType, pageable);
 
         // 1. keyword와 authorName 모두 있는 경우
         if (hasText(keyword) && hasText(authorName)) {
-            return searchByKeywordAndAuthor(keyword, authorName, searchType, pageable);
+            return searchByKeywordAndAuthor(keyword, authorName, searchType, sortedPageable);
         }
 
         // 2. keyword만 있는 경우
         if (hasText(keyword)) {
-            return searchByKeywordOnly(keyword, searchType, pageable);
+            return searchByKeywordOnly(keyword, searchType, sortedPageable);
         }
 
         // 3. authorName만 있는 경우
         if (hasText(authorName)) {
-            return discussionPostRepository.searchByAuthorName(authorName, pageable)
+            return discussionPostRepository.searchByAuthorName(authorName, sortedPageable)
                     .map(DiscussionPostResponse::from);
         }
 
         // 4. 검색 조건이 없는 경우 전체 목록 반환
-        return getAllPosts(pageable);
+        return getAllPosts(sortType, pageable);
     }
 
     private Page<DiscussionPostResponse> searchByKeywordOnly(String keyword, 
                                                               DiscussionSearchDto.SearchType searchType, 
                                                               Pageable pageable) {
-        Page<DiscussionPost> posts;
+        Page<DiscussionPost> result;
         
         if (searchType == DiscussionSearchDto.SearchType.TITLE) {
-            posts = discussionPostRepository.searchByTitle(keyword, pageable);
+            result = discussionPostRepository.searchByTitle(keyword, pageable);
         } else if (searchType == DiscussionSearchDto.SearchType.CONTENT) {
-            posts = discussionPostRepository.searchByContent(keyword, pageable);
+            result = discussionPostRepository.searchByContent(keyword, pageable);
         } else {
-            posts = discussionPostRepository.searchByKeyword(keyword, pageable);
+            result = discussionPostRepository.searchByKeyword(keyword, pageable);
         }
 
-        return posts.map(DiscussionPostResponse::from);
+        return result.map(DiscussionPostResponse::from);
     }
 
     private Page<DiscussionPostResponse> searchByKeywordAndAuthor(String keyword, 
                                                                    String authorName,
                                                                    DiscussionSearchDto.SearchType searchType, 
                                                                    Pageable pageable) {
-        Page<DiscussionPost> posts;
+        Page<DiscussionPost> result;
         
         if (searchType == DiscussionSearchDto.SearchType.TITLE) {
-            posts = discussionPostRepository.searchByTitleAndAuthor(keyword, authorName, pageable);
+            result = discussionPostRepository.searchByTitleAndAuthor(keyword, authorName, pageable);
         } else if (searchType == DiscussionSearchDto.SearchType.CONTENT) {
-            posts = discussionPostRepository.searchByContentAndAuthor(keyword, authorName, pageable);
+            result = discussionPostRepository.searchByContentAndAuthor(keyword, authorName, pageable);
         } else {
-            posts = discussionPostRepository.searchByKeywordAndAuthor(keyword, authorName, pageable);
+            result = discussionPostRepository.searchByKeywordAndAuthor(keyword, authorName, pageable);
         }
 
-        return posts.map(DiscussionPostResponse::from);
+        return result.map(DiscussionPostResponse::from);
+    }
+
+    private Pageable createSortedPageable(SortType sortType, Pageable pageable) {
+        if (sortType == null) {
+            sortType = SortType.LATEST;
+        }
+
+        Sort sort = createSort(sortType);
+        
+        return PageRequest.of(
+            pageable.getPageNumber(),
+            pageable.getPageSize(),
+            sort
+        );
+    }
+
+    private Sort createSort(SortType sortType) {
+        if (sortType == null) {
+            sortType = SortType.LATEST;
+        }
+
+        if (sortType == SortType.LATEST) {
+            // 최신순: 작성일 내림차순
+            return Sort.by(Sort.Direction.DESC, "createdAt");
+        } else if (sortType == SortType.POPULAR) {
+            // 인기순: 찬성+반대 합계 내림차순, 동점이면 최신순
+            return Sort.by(Sort.Direction.DESC, "agreeCount")
+                    .and(Sort.by(Sort.Direction.DESC, "disagreeCount"))
+                    .and(Sort.by(Sort.Direction.DESC, "createdAt"));
+        } else if (sortType == SortType.MOST_AGREED) {
+            // 찬성 많은 순: 찬성수 내림차순, 동점이면 최신순
+            return Sort.by(Sort.Direction.DESC, "agreeCount")
+                    .and(Sort.by(Sort.Direction.DESC, "createdAt"));
+        } else {
+            // 반대 많은 순: 반대수 내림차순, 동점이면 최신순
+            return Sort.by(Sort.Direction.DESC, "disagreeCount")
+                    .and(Sort.by(Sort.Direction.DESC, "createdAt"));
+        }
     }
 
     private boolean hasText(String str) {
