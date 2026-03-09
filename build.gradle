@@ -46,6 +46,10 @@ dependencies {
 
 	// H2 Database for testing
 	testImplementation 'com.h2database:h2'
+
+	// 모니터링 설정
+	implementation 'org.springframework.boot:spring-boot-starter-actuator'
+	implementation 'io.micrometer:micrometer-registry-prometheus'
 }
 
 tasks.named('test') {

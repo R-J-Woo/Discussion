@@ -17,7 +17,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -55,7 +54,7 @@ public class OpinionService {
         Opinion opinion = opinionRepository.findById(opinionId)
                 .orElseThrow(() -> new OpinionNotFoundException("존재하지 않는 의견입니다."));
 
-        if (!opinion.getAuthor().getUsername().equals(user.getUsername())) {
+        if (!opinion.getAuthor().getUserId().equals(user.getUserId())) {
             throw new UserNotAuthorException("본인이 작성한 의견만 수정할 수 있습니다.");
         }
 
@@ -69,7 +68,7 @@ public class OpinionService {
         Opinion opinion = opinionRepository.findById(opinionId)
                 .orElseThrow(() -> new OpinionNotFoundException("존재하지 않는 의견입니다."));
 
-        if (!opinion.getAuthor().getUsername().equals(user.getUsername())) {
+        if (!opinion.getAuthor().getUserId().equals(user.getUserId())) {
             throw new UserNotAuthorException("본인이 작성한 의견만 삭제할 수 있습니다.");
         }
 

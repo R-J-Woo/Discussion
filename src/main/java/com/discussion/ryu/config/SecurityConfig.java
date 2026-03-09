@@ -49,6 +49,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/discussions").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/discussions/search").permitAll() // 검색 API 허용
                         .requestMatchers(HttpMethod.GET, "/api/discussions/{postId:[0-9]+}").permitAll()
+                        .requestMatchers("/actuator/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
