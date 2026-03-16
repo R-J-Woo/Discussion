@@ -12,7 +12,15 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "discussion_posts")
+@Table(
+        name = "discussion_posts",
+        indexes = {
+                @Index(name = "idx_post_created_at", columnList = "created_at DESC, deleted_at"),
+                @Index(name = "idx_post_agree_count", columnList = "agree_count DESC, created_at DESC, deleted_at"),
+                @Index(name = "idx_post_disagree_count", columnList = "disagree_count DESC, created_at DESC, deleted_at"),
+                @Index(name = "idx_post_user_id", columnList = "user_id, deleted_at")
+        }
+)
 @Getter
 @Builder
 @NoArgsConstructor
