@@ -14,7 +14,7 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface DiscussionPostRepository extends JpaRepository<DiscussionPost, Long> {
 
-    @Query("SELECT DISTINCT d FROM DiscussionPost d JOIN FETCH d.author")
+    @Query("SELECT d FROM DiscussionPost d JOIN FETCH d.author")
     Page<DiscussionPost> findAllWithAuthor(Pageable pageable);
 
     @Query("SELECT d FROM DiscussionPost d JOIN FETCH d.author WHERE d.author = :user")
