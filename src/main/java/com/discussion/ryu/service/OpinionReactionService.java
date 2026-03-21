@@ -25,9 +25,11 @@ public class OpinionReactionService {
 
     @Transactional
     public OpinionReactionResponse toggleReaction(Long opinionId, User user, OpinionReactionRequestDto opinionReactionRequestDto) {
-        Opinion opinion = opinionRepository.findById(opinionId)
+        // 비관적 락으로 의견 조회 - 이 구문이 WHERE 절을 완료할 때까지 행 잠금
+        Opinion opinion = opinionRepository.findByIdWithLock(opinionId)
                 .orElseThrow(() -> new OpinionNotFoundException("존재하지 않는 의견입니다."));
 
+        // 기존 반응 확인
         Optional<OpinionReaction> existingReaction = opinionReactionRepository.findByUserAndOpinion(user, opinion);
 
         String message;
@@ -40,13 +42,13 @@ public class OpinionReactionService {
 
             if (reaction.getReactionType() == requestType) {
                 // 현재 reactionType과 동일한 버튼을 눌렀으면 취소
-                handleReactionRemove(opinionId, reaction);
+                handleReactionRemove(opinion, reaction);
                 opinionReactionRepository.delete(reaction);
                 message = requestType == ReactionType.LIKE ? "좋아요를 취소했습니다." : "싫어요를 취소했습니다.";
                 resultReaction = null;
             } else {
                 // 현재 reactionType과 다른 버튼을 눌렀으면 변경
-                handleReactionChange(opinionId, reaction.getReactionType(), requestType);
+                handleReactionChange(opinion, reaction.getReactionType(), requestType);
                 reaction.changeReactionType(requestType);
                 opinionReactionRepository.save(reaction);
                 message = requestType == ReactionType.LIKE ? "좋아요로 변경했습니다." : "싫어요로 변경했습니다.";
@@ -61,47 +63,44 @@ public class OpinionReactionService {
                     .reactionType(requestType)
                     .build();
             opinionReactionRepository.save(reaction);
-            handleReactionAddition(opinionId, requestType);
+            handleReactionAddition(opinion, requestType);
             message = requestType == ReactionType.LIKE ? "좋아요를 눌렀습니다." : "싫어요를 눌렀습니다.";
             resultReaction = requestType;
         }
 
-        // 원자적 쿼리로 업데이트된 최신 opinion을 다시 조회해서 응답
-        Opinion updatedOpinion = opinionRepository.findById(opinionId).orElseThrow();
-        return OpinionReactionResponse.from(updatedOpinion, resultReaction, message);
+        // 엔티티 변경 저장 (dirty checking)
+        opinionRepository.save(opinion);
+        
+        return OpinionReactionResponse.from(opinion, resultReaction, message);
     }
 
-    // 반응 추가 처리
-    public void handleReactionAddition(Long opinionId, ReactionType reactionType) {
+    private void handleReactionAddition(Opinion opinion, ReactionType reactionType) {
         if (reactionType == ReactionType.LIKE) {
-            opinionRepository.incrementLikeCount(opinionId);
+            opinion.incrementLikeCount();
         } else {
-            opinionRepository.incrementDislikeCount(opinionId);
+            opinion.incrementDislikeCount();
         }
     }
 
-    // 반응 제거 처리
-    public void handleReactionRemove(Long opinionId, OpinionReaction reaction) {
+    private void handleReactionRemove(Opinion opinion, OpinionReaction reaction) {
         if (reaction.getReactionType() == ReactionType.LIKE) {
-            opinionRepository.decrementLikeCount(opinionId);
+            opinion.decrementLikeCount();
         } else {
-            opinionRepository.decrementDislikeCount(opinionId);
+            opinion.decrementDislikeCount();
         }
     }
 
-    // 반응 변경 처리
-    public void handleReactionChange(Long opinionId, ReactionType oldType, ReactionType newType) {
-        // 기존 타입 카운트 감소, 새 카운트 증가
+    private void handleReactionChange(Opinion opinion, ReactionType oldType, ReactionType newType) {
+        // 기존 타입 카운트 감소, 새 타입 카운트 증가
         if (oldType == ReactionType.LIKE) {
-            opinionRepository.decrementLikeCount(opinionId);
-            opinionRepository.incrementDislikeCount(opinionId);
+            opinion.decrementLikeCount();
+            opinion.incrementDislikeCount();
         } else {
-            opinionRepository.decrementDislikeCount(opinionId);
-            opinionRepository.incrementLikeCount(opinionId);
+            opinion.decrementDislikeCount();
+            opinion.incrementLikeCount();
         }
     }
 
-    // 사용자의 반응 조회
     public ReactionType getUserReactionType(Opinion opinion, User user) {
         return opinionReactionRepository.findByUserAndOpinion(user, opinion)
                 .map(OpinionReaction::getReactionType)

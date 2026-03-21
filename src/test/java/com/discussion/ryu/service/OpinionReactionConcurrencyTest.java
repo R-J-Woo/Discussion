@@ -11,7 +11,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.ActiveProfiles;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -103,7 +102,7 @@ class OpinionReactionConcurrencyTest {
     }
 
     @Test
-    @DisplayName("동시에 100명이 좋아요를 누르면 likeCount는 100이 되어야 한다 - 현재는 실패할 것으로 예상")
+    @DisplayName("동시에 100명이 좋아요를 누르면 likeCount는 100이 되어야 한다")
     void concurrentLikeTest() throws InterruptedException {
         // given
         int threadCount = 100;

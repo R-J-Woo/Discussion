@@ -24,73 +24,91 @@ public class DiscussionVoteService {
 
     @Transactional
     public VoteResponse vote(User user, Long postId, VoteRequestDto voteRequestDto) {
-        DiscussionPost discussionPost = discussionPostRepository.findById(postId)
+        // 비관적 락으로 토론글 조회 - 이 구문이 WHERE 절을 완료할 때까지 행 잠금
+        DiscussionPost discussionPost = discussionPostRepository.findByIdWithLock(postId)
                 .orElseThrow(() -> new DiscussionPostNotFoundException("존재하지 않는 토론글입니다."));
 
+        // 기존 투표 확인
         Optional<DiscussionVote> existingVote = discussionVoteRepository.findByUserAndDiscussionPost(user, discussionPost);
+        
         if (existingVote.isPresent()) {
-            return changeVote(existingVote.get(), voteRequestDto.getVoteType(), postId);
+            return changeVote(discussionPost, existingVote.get(), voteRequestDto.getVoteType());
         } else {
-            return createVote(user, discussionPost, voteRequestDto.getVoteType());
+            return createVote(discussionPost, user, voteRequestDto.getVoteType());
         }
     }
 
-    private VoteResponse createVote(User user, DiscussionPost discussionPost, VoteType voteType) {
+    private VoteResponse createVote(DiscussionPost discussionPost, User user, VoteType voteType) {
         DiscussionVote discussionVote = DiscussionVote.builder()
                 .user(user)
                 .discussionPost(discussionPost)
                 .voteType(voteType)
                 .build();
 
+        // 엔티티의 메서드를 통해 카운트 증가
         if (voteType == VoteType.AGREE) {
-            discussionPostRepository.incrementAgreeCount(discussionPost.getId());
+            discussionPost.incrementAgreeCount();
         } else {
-            discussionPostRepository.incrementDisagreeCount(discussionPost.getId());
+            discussionPost.incrementDisagreeCount();
         }
 
         DiscussionVote savedVote = discussionVoteRepository.save(discussionVote);
+        discussionPostRepository.save(discussionPost);
 
         return VoteResponse.from(savedVote, discussionPost.getId());
     }
 
-    private VoteResponse changeVote(DiscussionVote vote, VoteType newVoteType, Long postId) {
+    private VoteResponse changeVote(DiscussionPost discussionPost, DiscussionVote vote, VoteType newVoteType) {
         VoteType beforeType = vote.getVoteType();
 
-        // 이전과 같은 타입이면 그대로 반환
+        // 이전과 같은 타입이면 변경하지 않음
         if (beforeType == newVoteType) {
-            return VoteResponse.from(vote, postId);
+            return VoteResponse.from(vote, discussionPost.getId());
         }
 
+        // 투표 타입 변경
         vote.changeVoteType(newVoteType);
 
+        // 엔티티 메서드를 통해 카운트 업데이트
         if (beforeType == VoteType.AGREE) {
-            discussionPostRepository.decrementAgreeCount(postId);
-            discussionPostRepository.incrementDisagreeCount(postId);
+            discussionPost.decrementAgreeCount();
+            discussionPost.incrementDisagreeCount();
         } else {
-            discussionPostRepository.incrementAgreeCount(postId);
-            discussionPostRepository.decrementDisagreeCount(postId);
+            discussionPost.incrementAgreeCount();
+            discussionPost.decrementDisagreeCount();
         }
 
-        return VoteResponse.from(vote, postId);
+        return VoteResponse.from(vote, discussionPost.getId());
     }
 
+    /**
+     * 투표 취소
+     * 비관적 락으로 토론글을 조회하여 동시성 제어
+     */
     @Transactional
     public void cancelVote(Long postId, User user) {
-        DiscussionPost post = discussionPostRepository.findById(postId)
+        // 비관적 락으로 토론글 조회
+        DiscussionPost post = discussionPostRepository.findByIdWithLock(postId)
                 .orElseThrow(() -> new DiscussionPostNotFoundException("존재하지 않는 토론글입니다."));
 
         DiscussionVote vote = discussionVoteRepository.findByUserAndDiscussionPost(user, post)
                 .orElseThrow(() -> new VoteNotFoundException("투표 기록이 없습니다."));
 
+        // 엔티티 카운트 감소
         if (vote.getVoteType() == VoteType.AGREE) {
-            discussionPostRepository.decrementAgreeCount(postId);
+            post.decrementAgreeCount();
         } else {
-            discussionPostRepository.decrementDisagreeCount(postId);
+            post.decrementDisagreeCount();
         }
 
         discussionVoteRepository.delete(vote);
+        discussionPostRepository.save(post);
     }
 
+    /**
+     * 투표 상태 조회 (읽기 전용)
+     * 락이 필요 없음 - 읽기 작업만 수행
+     */
     public VoteStatusResponse getVoteStatus(Long postId, User user) {
         DiscussionPost post = discussionPostRepository.findById(postId)
                 .orElseThrow(() -> new DiscussionPostNotFoundException("존재하지 않는 토론글입니다."));

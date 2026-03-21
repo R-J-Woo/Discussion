@@ -64,4 +64,24 @@ public class Opinion {
         this.content = content;
         this.stance = stance;
     }
+
+    // 좋아요 증가
+    public void incrementLikeCount() {
+        this.likeCount += 1;
+    }
+
+    // 좋아요 감소
+    public void decrementLikeCount() {
+        this.likeCount = Math.max(0, this.likeCount - 1);
+    }
+
+    // 싫어요 증가
+    public void incrementDislikeCount() {
+        this.dislikeCount += 1;
+    }
+
+    // 싫어요 감소
+    public void decrementDislikeCount() {
+        this.dislikeCount = Math.max(0, this.dislikeCount - 1);
+    }
 }

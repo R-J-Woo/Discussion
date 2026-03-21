@@ -2,13 +2,16 @@ package com.discussion.ryu.repository;
 
 import com.discussion.ryu.entity.DiscussionPost;
 import com.discussion.ryu.entity.User;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+
+import java.util.Optional;
 
 
 @Repository
@@ -20,21 +23,10 @@ public interface DiscussionPostRepository extends JpaRepository<DiscussionPost, 
     @Query("SELECT d FROM DiscussionPost d JOIN FETCH d.author WHERE d.author = :user")
     Page<DiscussionPost> findByAuthor(User user, Pageable pageable);
 
-    @Modifying
-    @Query("UPDATE DiscussionPost p SET p.agreeCount = p.agreeCount + 1 WHERE p.id = :id")
-    void incrementAgreeCount(@Param("id") Long id);
-
-    @Modifying
-    @Query("UPDATE DiscussionPost p SET p.agreeCount = p.agreeCount - 1 WHERE p.id = :id AND p.agreeCount > 0")
-    void decrementAgreeCount(@Param("id") Long id);
-
-    @Modifying
-    @Query("UPDATE DiscussionPost p SET p.disagreeCount = p.disagreeCount + 1 WHERE p.id = :id")
-    void incrementDisagreeCount(@Param("id") Long id);
-
-    @Modifying
-    @Query("UPDATE DiscussionPost p SET p.disagreeCount = p.disagreeCount - 1 WHERE p.id = :id AND p.disagreeCount > 0")
-    void decrementDisagreeCount(@Param("id") Long id);
+    // 비관적 락을 사용한 findById - 투표/반응 업데이트 시 사용
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT d FROM DiscussionPost d WHERE d.id = :id")
+    Optional<DiscussionPost> findByIdWithLock(@Param("id") Long id);
 
     // 검색 기능
     // keyword -> title & content

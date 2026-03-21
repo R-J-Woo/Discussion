@@ -74,4 +74,24 @@ public class DiscussionPost {
         this.title = title;
         this.content = content;
     }
+
+    // 찬성 투표 증가
+    public void incrementAgreeCount() {
+        this.agreeCount += 1;
+    }
+
+    // 찬성 투표 감소
+    public void decrementAgreeCount() {
+        this.agreeCount = Math.max(0, this.agreeCount - 1);
+    }
+
+    // 반대 투표 증가
+    public void incrementDisagreeCount() {
+        this.disagreeCount += 1;
+    }
+
+    // 반대 투표 감소
+    public void decrementDisagreeCount() {
+        this.disagreeCount = Math.max(0, this.disagreeCount - 1);
+    }
 }
