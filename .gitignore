@@ -38,3 +38,6 @@ out/
 
 ### 민감정보 파일 ###
 src/main/resources/application-local.yml
+
+### FCM 설정 파일
+src/main/resources/firebase/fcm-key.json
