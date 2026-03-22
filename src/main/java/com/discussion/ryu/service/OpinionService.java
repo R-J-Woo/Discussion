@@ -25,6 +25,7 @@ public class OpinionService {
 
     private final OpinionRepository opinionRepository;
     private final DiscussionPostRepository discussionPostRepository;
+    private final NotificationManagementService notificationManagementService;
 
     @Transactional
     public OpinionResponse createOpinion(Long postId, User user, OpinionCreateDto opinionCreateDto) {
@@ -41,6 +42,14 @@ public class OpinionService {
                 .build();
 
         Opinion savedOpinion = opinionRepository.save(opinion);
+
+        // 토론글 작성자에게 알림 발송
+        notificationManagementService.notifyNewOpinion(
+                discussionPost.getAuthor(),
+                savedOpinion,
+                user.getName()
+        );
+
         return OpinionResponse.from(savedOpinion);
     }
 
