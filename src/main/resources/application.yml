@@ -20,3 +20,6 @@ management:
   endpoint:
     health:
       show-details: always  # 상세한 헬스 정보 표시
+
+firebase:
+  file-path: src/main/resources/firebase/fcm-key.json
