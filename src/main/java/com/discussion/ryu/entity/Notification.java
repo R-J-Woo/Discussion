@@ -13,7 +13,10 @@ import java.time.LocalDateTime;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+<<<<<<< HEAD
 @lombok.Getter
+=======
+>>>>>>> 2d2a951a0eac320e79e3756153b16bf503b05b3f
 public class Notification {
 
     @Id
@@ -40,8 +43,11 @@ public class Notification {
     @CreationTimestamp
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
+<<<<<<< HEAD
 
     public void setSent(boolean sent) {
         this.isSent = sent;
     }
+=======
+>>>>>>> 2d2a951a0eac320e79e3756153b16bf503b05b3f
 }
