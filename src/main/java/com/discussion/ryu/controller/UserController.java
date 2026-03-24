@@ -23,11 +23,6 @@ public class UserController {
 
     private final UserService userService;
 
-    @GetMapping("/hello")
-    public String hello() {
-        return "안녕하세요 제작자입니다!";
-    }
-
     @Operation(summary = "회원가입", description = "새로운 사용자를 등록합니다.")
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
