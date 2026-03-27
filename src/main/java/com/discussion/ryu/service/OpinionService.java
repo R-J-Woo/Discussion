@@ -20,15 +20,30 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
-@Transactional(readOnly = true)
 public class OpinionService {
 
     private final OpinionRepository opinionRepository;
     private final DiscussionPostRepository discussionPostRepository;
     private final NotificationManagementService notificationManagementService;
 
-    @Transactional
+
     public OpinionResponse createOpinion(Long postId, User user, OpinionCreateDto opinionCreateDto) {
+
+        // DB에 의견 저장
+        Opinion savedOpinion = createOpinionWithTransaction(postId, user, opinionCreateDto);
+
+        // 토론글 작성자에게 알림 발송
+        notificationManagementService.notifyNewOpinion(
+                savedOpinion.getDiscussionPost().getAuthor(),
+                savedOpinion,
+                user.getName()
+        );
+
+        return OpinionResponse.from(savedOpinion);
+    }
+
+    @Transactional
+    public Opinion createOpinionWithTransaction(Long postId, User user, OpinionCreateDto opinionCreateDto) {
         DiscussionPost discussionPost = discussionPostRepository.findById(postId)
                 .orElseThrow(() -> new DiscussionPostNotFoundException("존재하지 않는 토론글입니다."));
 
@@ -41,18 +56,10 @@ public class OpinionService {
                 .dislikeCount(0L)
                 .build();
 
-        Opinion savedOpinion = opinionRepository.save(opinion);
-
-        // 토론글 작성자에게 알림 발송
-        notificationManagementService.notifyNewOpinion(
-                discussionPost.getAuthor(),
-                savedOpinion,
-                user.getName()
-        );
-
-        return OpinionResponse.from(savedOpinion);
+        return opinionRepository.save(opinion);
     }
 
+    @Transactional(readOnly = true)
     public Page<OpinionResponse> getOpinionsByPost(DiscussionPost discussionPost, Pageable pageable) {
         return opinionRepository.findByDiscussionPost(discussionPost, pageable)
                 .map(OpinionResponse::from);
