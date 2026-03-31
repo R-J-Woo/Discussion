@@ -21,8 +21,7 @@ import java.util.List;
 public class NotificationManagementService {
 
     private final NotificationRepository notificationRepository;
-    private final FcmTokenService fcmTokenService;
-    private final FcmService fcmService;
+    private final NotificationSendService notificationSendService;
 
     /**
      * 새 의견 등록 알림 발송 및 저장
@@ -40,7 +39,7 @@ public class NotificationManagementService {
         Notification savedNotification = saveNotification(postAuthor, opinion, title, body);
 
         // FCM 토큰으로 실제 푸시 알림 발송
-        sendFcmNotification(postAuthor, title, body, savedNotification);
+        notificationSendService.sendFcmNotification(postAuthor, title, body, savedNotification);
     }
 
     @Transactional
@@ -54,36 +53,6 @@ public class NotificationManagementService {
                 .build();
 
         return notificationRepository.save(notification);
-    }
-
-    /**
-     * FCM 푸시 알림 발송 (내부 메서드)
-     * notifyNewOpinion()의 트랜잭션 범위 내에서 실행됨
-     */
-    @Async
-    @Transactional
-    public void sendFcmNotification(User recipient, String title, String body, Notification notification) {
-
-        List<FcmToken> tokens = fcmTokenService.getUserFcmTokens(recipient);
-
-        if (tokens.isEmpty()) {
-            notification.setSent(false);  // 발송 못함 표시
-            notificationRepository.save(notification);  // 이력은 저장
-            return;
-        }
-
-        for (FcmToken token : tokens) {
-            try {
-                fcmService.sendMessage(token.getToken(), title, body);
-                log.info("FCM 알림 발송 성공 - 사용자: {}, 의견: {}", recipient.getUserId(), notification.getOpinion().getId());
-                notification.setSent(true);
-            } catch (Exception e) {
-                log.error("FCM 알림 발송 실패 - 사용자: {}, 이유: {}", recipient.getUserId(), e.getMessage());
-                // 발송 실패해도 알림 이력은 저장됨
-            }
-        }
-
-        notificationRepository.save(notification);
     }
 
     /**

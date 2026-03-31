@@ -21,3 +21,10 @@ management:
   endpoint:
     health:
       show-details: always  # 상세한 헬스 정보 표시
+
+logging:
+  level:
+    com.discussion.ryu.service.NotificationManagementService: DEBUG
+    org.springframework.scheduling: DEBUG
+  pattern:
+    console: "%d{HH:mm:ss.SSS} [%-15thread] %-5level %msg%n"
