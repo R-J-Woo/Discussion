@@ -1,13 +1,11 @@
 package com.discussion.ryu.dto.discussion;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 @Schema(description = "토론글 검색 요청")
 @Getter
+@Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor

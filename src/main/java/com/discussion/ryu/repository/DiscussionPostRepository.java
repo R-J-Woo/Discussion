@@ -1,5 +1,6 @@
 package com.discussion.ryu.repository;
 
+import com.discussion.ryu.dto.discussion.DiscussionSearchDto;
 import com.discussion.ryu.entity.DiscussionPost;
 import com.discussion.ryu.entity.User;
 import jakarta.persistence.LockModeType;

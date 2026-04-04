@@ -52,14 +52,6 @@ public class DiscussionPost {
     @Column(nullable = false)
     private Long disagreeCount = 0L;
 
-    @Builder.Default
-    @OneToMany(mappedBy = "discussionPost", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    private List<DiscussionVote> votes = new ArrayList<>();
-
-    @Builder.Default
-    @OneToMany(mappedBy = "discussionPost", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    private List<Opinion> opinions = new ArrayList<>();
-
     @CreationTimestamp
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;

@@ -6,6 +6,7 @@ import com.discussion.ryu.entity.*;
 import com.discussion.ryu.exception.discussion.DiscussionPostNotFoundException;
 import com.discussion.ryu.exception.discussion.UserNotAuthorException;
 import com.discussion.ryu.repository.DiscussionPostRepository;
+import com.discussion.ryu.repository.DiscussionPostSearchRepositoryImpl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -21,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class DiscussionPostService {
 
     private final DiscussionPostRepository discussionPostRepository;
+    private final DiscussionPostSearchRepositoryImpl discussionPostSearchRepository;
     private final OpinionService opinionService;
 
     @Transactional
@@ -92,24 +94,9 @@ public class DiscussionPostService {
         // 정렬이 적용된 Pageable 생성
         Pageable sortedPageable = createSortedPageable(sortType, pageable);
 
-        // 1. keyword와 authorName 모두 있는 경우
-        if (hasText(keyword) && hasText(authorName)) {
-            return searchByKeywordAndAuthor(keyword, authorName, searchType, sortedPageable);
-        }
-
-        // 2. keyword만 있는 경우
-        if (hasText(keyword)) {
-            return searchByKeywordOnly(keyword, searchType, sortedPageable);
-        }
-
-        // 3. authorName만 있는 경우
-        if (hasText(authorName)) {
-            return discussionPostRepository.searchByAuthorName(authorName, sortedPageable)
-                    .map(DiscussionPostResponse::from);
-        }
-
-        // 4. 검색 조건이 없는 경우 전체 목록 반환
-        return getAllPosts(sortType, pageable);
+        return discussionPostSearchRepository
+                .searchPosts(keyword, searchType, authorName, sortedPageable)
+                .map(DiscussionPostResponse::from);
     }
 
     private Page<DiscussionPostResponse> searchByKeywordOnly(String keyword, 
