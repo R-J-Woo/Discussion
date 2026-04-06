@@ -87,15 +87,11 @@ public class DiscussionPostService {
 
     public Page<DiscussionPostResponse> searchPosts(DiscussionSearchDto searchDto, Pageable pageable) {
         String keyword = searchDto.getKeyword();
-        String authorName = searchDto.getAuthorName();
         DiscussionSearchDto.SearchType searchType = searchDto.getSearchType();
         SortType sortType = searchDto.getSortType();
 
-        // 정렬이 적용된 Pageable 생성
-        Pageable sortedPageable = createSortedPageable(sortType, pageable);
-
         return discussionPostSearchRepository
-                .searchPosts(keyword, searchType, authorName, sortedPageable)
+                .searchPosts(keyword, searchType, pageable, sortType)
                 .map(DiscussionPostResponse::from);
     }
 

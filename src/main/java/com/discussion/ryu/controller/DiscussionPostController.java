@@ -21,6 +21,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+@Slf4j
 @Tag(name = "토론글", description = "토론글 관련 API")
 @RestController
 @RequiredArgsConstructor
@@ -266,7 +267,7 @@ public class DiscussionPostController {
         return ResponseEntity.ok(ApiResponse.success(response, "투표 상태를 조회했습니다.", HttpStatus.OK));
     }
 
-    @Operation(summary = "토론글 검색", description = "키워드, 작성자명으로 토론글을 검색합니다. (인증 불필요)")
+    @Operation(summary = "토론글 검색", description = "키워드로 토론글을 검색합니다. (인증 불필요)")
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
                     responseCode = "200",
@@ -279,6 +280,7 @@ public class DiscussionPostController {
             @Parameter(description = "페이지 번호 (0부터 시작)", example = "0")
             @PageableDefault(size = 20) Pageable pageable
     ) {
+        log.info("controller searchDto: {}", searchDto);
         Page<DiscussionPostResponse> posts = discussionPostService.searchPosts(searchDto, pageable);
         return ResponseEntity.ok(ApiResponse.success(posts, "토론글 검색이 완료되었습니다.", HttpStatus.OK));
     }

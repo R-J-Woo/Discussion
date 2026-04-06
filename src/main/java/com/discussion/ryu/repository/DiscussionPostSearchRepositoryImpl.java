@@ -1,11 +1,14 @@
 package com.discussion.ryu.repository;
 
 import com.discussion.ryu.dto.discussion.DiscussionSearchDto;
+import com.discussion.ryu.dto.discussion.SortType;
 import com.discussion.ryu.entity.DiscussionPost;
 import com.discussion.ryu.entity.QDiscussionPost;
 import com.discussion.ryu.entity.QUser;
 import com.querydsl.core.BooleanBuilder;
-import com.querydsl.core.types.dsl.BooleanExpression;
+import com.querydsl.core.types.OrderSpecifier;
+import com.querydsl.core.types.dsl.Expressions;
+import com.querydsl.core.types.dsl.NumberTemplate;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -13,6 +16,7 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Repository
@@ -27,13 +31,11 @@ public class DiscussionPostSearchRepositoryImpl implements DiscussionPostReposit
     public Page<DiscussionPost> searchPosts(
             String keyword,
             DiscussionSearchDto.SearchType searchType,
-            String authorName,
-            Pageable pageable
+            Pageable pageable,
+            SortType sortType
     ) {
-        // 1. 동적 WHERE 절 생성
-        BooleanBuilder whereClause = buildWhereClause(keyword, searchType, authorName);
+        BooleanBuilder whereClause = buildWhereClause(keyword, searchType);
 
-        // 2. 전체 개수 조회
         long total = queryFactory
                 .selectFrom(discussionPost)
                 .join(discussionPost.author, user)
@@ -41,13 +43,12 @@ public class DiscussionPostSearchRepositoryImpl implements DiscussionPostReposit
                 .distinct()
                 .fetchCount();
 
-        // 3. 페이징된 결과 조회
         List<DiscussionPost> results = queryFactory
                 .selectFrom(discussionPost)
-                .join(discussionPost.author, user).fetchJoin()  // N+1 방지
+                .join(discussionPost.author, user).fetchJoin()
                 .where(whereClause)
                 .distinct()
-                .orderBy(discussionPost.createdAt.desc())
+                .orderBy(buildOrderSpecifiers(keyword, searchType, sortType))
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
                 .fetch();
@@ -55,37 +56,69 @@ public class DiscussionPostSearchRepositoryImpl implements DiscussionPostReposit
         return new PageImpl<>(results, pageable, total);
     }
 
-    private BooleanBuilder buildWhereClause(String keyword, DiscussionSearchDto.SearchType searchType, String authorName) {
-
+    private BooleanBuilder buildWhereClause(String keyword, DiscussionSearchDto.SearchType searchType) {
         BooleanBuilder where = new BooleanBuilder();
 
-        // 삭제되지 않은 항목
         where.and(discussionPost.deletedAt.isNull());
 
-        // 키워드 있으면 추가
         if (hasText(keyword)) {
-            where.and(buildKeywordExpression(keyword, searchType));
-        }
-
-        // 작성자명 있으면 추가
-        if (hasText(authorName)) {
-            where.and(user.name.like("%" + authorName + "%"));
+            where.and(buildFullTextExpression(keyword, searchType).gt(0));
         }
 
         return where;
     }
 
-    private BooleanExpression buildKeywordExpression(String keyword, DiscussionSearchDto.SearchType searchType) {
+    /**
+     * keyword 유무 및 SortType에 따라 ORDER BY 절 구성.
+     * keyword가 있으면 관련도 점수를 1순위로 추가하고, 그 다음 SortType 정렬.
+     */
+    private OrderSpecifier<?>[] buildOrderSpecifiers(String keyword, DiscussionSearchDto.SearchType searchType, SortType sortType) {
+        List<OrderSpecifier<?>> orders = new ArrayList<>();
 
-        String likeKeyword = "%" + keyword + "%";
+        // keyword가 있을 때만 관련도 점수 추가 (없으면 아예 추가하지 않음)
+        if (hasText(keyword)) {
+            orders.add(buildFullTextExpression(keyword, searchType).desc());
+        }
+
+        SortType effectiveSortType = sortType != null ? sortType : SortType.LATEST;
+        switch (effectiveSortType) {
+            case POPULAR -> {
+                orders.add(discussionPost.agreeCount.add(discussionPost.disagreeCount).desc());
+                orders.add(discussionPost.createdAt.desc());
+            }
+            case MOST_AGREED -> {
+                orders.add(discussionPost.agreeCount.desc());
+                orders.add(discussionPost.createdAt.desc());
+            }
+            case MOST_DISAGREED -> {
+                orders.add(discussionPost.disagreeCount.desc());
+                orders.add(discussionPost.createdAt.desc());
+            }
+            default -> orders.add(discussionPost.createdAt.desc()); // LATEST
+        }
+
+        return orders.toArray(new OrderSpecifier[0]);
+    }
+
+    /**
+     * 검색 타입에 따라 FULLTEXT 관련도 점수를 반환하는 NumberTemplate 생성.
+     * CustomFunctionsContributor에 등록된 match_against 함수를 사용하여
+     * MySQL MATCH ... AGAINST (... IN BOOLEAN MODE) SQL로 변환됨.
+     */
+    private NumberTemplate<Double> buildFullTextExpression(String keyword, DiscussionSearchDto.SearchType searchType) {
+
+        String processed = "+" + keyword + "*";
 
         return switch (searchType != null ? searchType : DiscussionSearchDto.SearchType.ALL) {
-            case TITLE -> discussionPost.title.like(likeKeyword);
-            case CONTENT -> discussionPost.content.like(likeKeyword);
-            case ALL -> discussionPost.title.like(likeKeyword)
-                    .or(discussionPost.content.like(likeKeyword));
-            default -> discussionPost.title.like(likeKeyword)
-                    .or(discussionPost.content.like(likeKeyword));
+            case TITLE -> Expressions.numberTemplate(Double.class,
+                    "function('match_against_single', {0}, {1})",
+                    discussionPost.title, processed);
+            case CONTENT -> Expressions.numberTemplate(Double.class,
+                    "function('match_against_single', {0}, {1})",
+                    discussionPost.content, processed);
+            default -> Expressions.numberTemplate(Double.class,
+                    "function('match_against_multi', {0}, {1}, {2})",
+                    discussionPost.title, discussionPost.content, processed);
         };
     }
 

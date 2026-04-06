@@ -7,15 +7,13 @@ import lombok.*;
 @Getter
 @Setter
 @Builder
+@ToString
 @NoArgsConstructor
 @AllArgsConstructor
 public class DiscussionSearchDto {
 
     @Schema(description = "검색 키워드 (제목 또는 내용)", example = "환경")
     private String keyword;
-
-    @Schema(description = "작성자 닉네임", example = "홍길동")
-    private String authorName;
 
     @Schema(description = "검색 타입 (ALL: 전체, TITLE: 제목, CONTENT: 내용)", example = "ALL", defaultValue = "ALL")
     private SearchType searchType;
