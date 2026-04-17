@@ -21,11 +21,10 @@ jobs:
       - name: application-local.yml 파일 만들기
         run: echo "${{ secrets.APPLICATION_PROPERTIES }}" > ./src/main/resources/application-local.yml
 
-      # 추가
       - name: fcm-key.json 파일 만들기
         run: |
           mkdir -p ./src/main/resources/firebase
-          echo "${{ secrets.FCM_KEY_JSON }}" > ./src/main/resources/firebase/fcm-key.json
+          echo '${{ secrets.FCM_KEY_JSON }}' > ./src/main/resources/firebase/fcm-key.json
           mkdir -p ./src/test/resources/firebase
           cp ./src/main/resources/firebase/fcm-key.json ./src/test/resources/firebase/fcm-key.json
 
