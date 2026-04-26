@@ -95,50 +95,17 @@ public class DiscussionPostService {
                 .map(DiscussionPostResponse::from);
     }
 
-    private Page<DiscussionPostResponse> searchByKeywordOnly(String keyword, 
-                                                              DiscussionSearchDto.SearchType searchType, 
-                                                              Pageable pageable) {
-        Page<DiscussionPost> result;
-        
-        if (searchType == DiscussionSearchDto.SearchType.TITLE) {
-            result = discussionPostRepository.searchByTitle(keyword, pageable);
-        } else if (searchType == DiscussionSearchDto.SearchType.CONTENT) {
-            result = discussionPostRepository.searchByContent(keyword, pageable);
-        } else {
-            result = discussionPostRepository.searchByKeyword(keyword, pageable);
-        }
-
-        return result.map(DiscussionPostResponse::from);
-    }
-
-    private Page<DiscussionPostResponse> searchByKeywordAndAuthor(String keyword, 
-                                                                   String authorName,
-                                                                   DiscussionSearchDto.SearchType searchType, 
-                                                                   Pageable pageable) {
-        Page<DiscussionPost> result;
-        
-        if (searchType == DiscussionSearchDto.SearchType.TITLE) {
-            result = discussionPostRepository.searchByTitleAndAuthor(keyword, authorName, pageable);
-        } else if (searchType == DiscussionSearchDto.SearchType.CONTENT) {
-            result = discussionPostRepository.searchByContentAndAuthor(keyword, authorName, pageable);
-        } else {
-            result = discussionPostRepository.searchByKeywordAndAuthor(keyword, authorName, pageable);
-        }
-
-        return result.map(DiscussionPostResponse::from);
-    }
-
     private Pageable createSortedPageable(SortType sortType, Pageable pageable) {
         if (sortType == null) {
             sortType = SortType.LATEST;
         }
 
         Sort sort = createSort(sortType);
-        
+
         return PageRequest.of(
-            pageable.getPageNumber(),
-            pageable.getPageSize(),
-            sort
+                pageable.getPageNumber(),
+                pageable.getPageSize(),
+                sort
         );
     }
 
@@ -164,9 +131,5 @@ public class DiscussionPostService {
             return Sort.by(Sort.Direction.DESC, "disagreeCount")
                     .and(Sort.by(Sort.Direction.DESC, "createdAt"));
         }
-    }
-
-    private boolean hasText(String str) {
-        return str != null && !str.trim().isEmpty();
     }
 }

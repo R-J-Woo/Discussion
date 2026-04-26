@@ -6,6 +6,7 @@ import com.discussion.ryu.exception.discussion.UserNotAuthorException;
 import com.discussion.ryu.exception.discussion.VoteNotFoundException;
 import com.discussion.ryu.exception.opinion.OpinionNotFoundException;
 import com.discussion.ryu.exception.user.*;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -69,6 +70,13 @@ public class GlobalExceptionHandler {
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public ApiResponse<Void> handleNotFoundException(RuntimeException e) {
         return ApiResponse.fail(e.getMessage(), HttpStatus.NOT_FOUND);
+    }
+
+    // 중복 투표 에러
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public ApiResponse<Void> handleDataIntegrityViolationException(DataIntegrityViolationException e) {
+        return ApiResponse.fail("이미 처리된 요청입니다.", HttpStatus.CONFLICT);
     }
 
     @ExceptionHandler(RuntimeException.class)
