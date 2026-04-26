@@ -26,7 +26,7 @@ public class OpinionReactionService {
     @Transactional
     public OpinionReactionResponse toggleReaction(Long opinionId, User user, OpinionReactionRequestDto opinionReactionRequestDto) {
         // 비관적 락으로 의견 조회 - 이 구문이 WHERE 절을 완료할 때까지 행 잠금
-        Opinion opinion = opinionRepository.findByIdWithLock(opinionId)
+        Opinion opinion = opinionRepository.findById(opinionId)
                 .orElseThrow(() -> new OpinionNotFoundException("존재하지 않는 의견입니다."));
 
         // 기존 반응 확인
@@ -42,13 +42,13 @@ public class OpinionReactionService {
 
             if (reaction.getReactionType() == requestType) {
                 // 현재 reactionType과 동일한 버튼을 눌렀으면 취소
-                handleReactionRemove(opinion, reaction);
                 opinionReactionRepository.delete(reaction);
+                handleReactionRemove(opinion.getId(), requestType);
                 message = requestType == ReactionType.LIKE ? "좋아요를 취소했습니다." : "싫어요를 취소했습니다.";
                 resultReaction = null;
             } else {
                 // 현재 reactionType과 다른 버튼을 눌렀으면 변경
-                handleReactionChange(opinion, reaction.getReactionType(), requestType);
+                handleReactionChange(opinion.getId(), reaction.getReactionType(), requestType);
                 reaction.changeReactionType(requestType);
                 opinionReactionRepository.save(reaction);
                 message = requestType == ReactionType.LIKE ? "좋아요로 변경했습니다." : "싫어요로 변경했습니다.";
@@ -63,41 +63,41 @@ public class OpinionReactionService {
                     .reactionType(requestType)
                     .build();
             opinionReactionRepository.save(reaction);
-            handleReactionAddition(opinion, requestType);
+            handleReactionAddition(opinion.getId(), requestType);
             message = requestType == ReactionType.LIKE ? "좋아요를 눌렀습니다." : "싫어요를 눌렀습니다.";
             resultReaction = requestType;
         }
 
-        // 엔티티 변경 저장 (dirty checking)
-        opinionRepository.save(opinion);
-        
-        return OpinionReactionResponse.from(opinion, resultReaction, message);
+        // 좋아요 수 변경 후 1차 캐시에 반영이 안되었기 때문에 다시 새롭게 조회
+        Opinion updatedOpinion = opinionRepository.findById(opinionId)
+                .orElseThrow(() -> new OpinionNotFoundException("존재하지 않는 의견입니다."));
+        return OpinionReactionResponse.from(updatedOpinion, resultReaction, message);
     }
 
-    private void handleReactionAddition(Opinion opinion, ReactionType reactionType) {
+    private void handleReactionAddition(Long opinionId, ReactionType reactionType) {
         if (reactionType == ReactionType.LIKE) {
-            opinion.incrementLikeCount();
+            opinionRepository.incrementLikeCount(opinionId);
         } else {
-            opinion.incrementDislikeCount();
+            opinionRepository.incrementDislikeCount(opinionId);
         }
     }
 
-    private void handleReactionRemove(Opinion opinion, OpinionReaction reaction) {
-        if (reaction.getReactionType() == ReactionType.LIKE) {
-            opinion.decrementLikeCount();
+    private void handleReactionRemove(Long opinionId, ReactionType reactionType) {
+        if (reactionType == ReactionType.LIKE) {
+            opinionRepository.decrementLikeCount(opinionId);
         } else {
-            opinion.decrementDislikeCount();
+            opinionRepository.decrementDislikeCount(opinionId);
         }
     }
 
-    private void handleReactionChange(Opinion opinion, ReactionType oldType, ReactionType newType) {
+    private void handleReactionChange(Long opinionId, ReactionType oldType, ReactionType newType) {
         // 기존 타입 카운트 감소, 새 타입 카운트 증가
         if (oldType == ReactionType.LIKE) {
-            opinion.decrementLikeCount();
-            opinion.incrementDislikeCount();
+            opinionRepository.decrementLikeCount(opinionId);
+            opinionRepository.incrementDislikeCount(opinionId);
         } else {
-            opinion.decrementDislikeCount();
-            opinion.incrementLikeCount();
+            opinionRepository.decrementDislikeCount(opinionId);
+            opinionRepository.incrementLikeCount(opinionId);
         }
     }
 

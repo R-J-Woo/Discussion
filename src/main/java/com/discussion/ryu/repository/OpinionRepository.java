@@ -7,6 +7,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -23,4 +24,20 @@ public interface OpinionRepository extends JpaRepository<Opinion, Long> {
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT o FROM Opinion o WHERE o.id = :id")
     Optional<Opinion> findByIdWithLock(@Param("id") Long id);
+
+    @Modifying(clearAutomatically = true)
+    @Query("UPDATE Opinion o SET o.likeCount = o.likeCount + 1 WHERE o.id = :id")
+    void incrementLikeCount(@Param("id") Long id);
+
+    @Modifying(clearAutomatically = true)
+    @Query("UPDATE Opinion o SET o.likeCount = GREATEST(0, o.likeCount - 1) WHERE o.id = :id")
+    void decrementLikeCount(@Param("id") Long id);
+
+    @Modifying(clearAutomatically = true)
+    @Query("UPDATE Opinion o SET o.dislikeCount = o.dislikeCount + 1 WHERE o.id = :id")
+    void incrementDislikeCount(@Param("id") Long id);
+
+    @Modifying(clearAutomatically = true)
+    @Query("UPDATE Opinion o SET o.dislikeCount = GREATEST(0, o.dislikeCount - 1) WHERE o.id = :id")
+    void decrementDislikeCount(@Param("id") Long id);
 }
