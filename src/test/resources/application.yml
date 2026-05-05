@@ -18,9 +18,17 @@ spring:
     console:
       enabled: true
 
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.elasticsearch.ElasticsearchClientAutoConfiguration
+      - org.springframework.boot.autoconfigure.data.elasticsearch.ElasticsearchDataAutoConfiguration
+      - org.springframework.boot.autoconfigure.data.elasticsearch.ElasticsearchRepositoriesAutoConfiguration
+
 jwt:
   secret: test-secret-key-for-jwt-token-generation-minimum-256-bits-required
   expiration: 86400000
 
 firebase:
   file-path: src/main/resources/firebase/fcm-key.json
+
+

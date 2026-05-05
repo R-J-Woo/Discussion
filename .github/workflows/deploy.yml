@@ -7,6 +7,7 @@ on:
 
 jobs:
   project-deploy:
+    if: false # AWS 서버를 꺼둔 상태라 일단 CI/CD는 막아놓음
     runs-on: ubuntu-latest
     steps:
       - name: Github Repository에 올린 파일들을 불러오기
