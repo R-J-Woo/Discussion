@@ -13,6 +13,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 
@@ -40,4 +41,7 @@ public interface DiscussionPostRepository extends JpaRepository<DiscussionPost, 
     @Modifying(clearAutomatically = true)
     @Query("UPDATE DiscussionPost d SET d.disagreeCount = GREATEST(0, d.disagreeCount - 1) WHERE d.id = :id")
     void decrementDisagreeCount(@Param("id") Long id);
+
+    @Query("SELECT d FROM DiscussionPost d JOIN FETCH d.author WHERE d.id IN :ids")
+    List<DiscussionPost> findAllByIdInWithAuthor(@Param("ids") List<Long> ids);
 }

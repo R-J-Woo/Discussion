@@ -5,8 +5,9 @@ import com.discussion.ryu.dto.opinion.OpinionResponse;
 import com.discussion.ryu.entity.*;
 import com.discussion.ryu.exception.discussion.DiscussionPostNotFoundException;
 import com.discussion.ryu.exception.discussion.UserNotAuthorException;
+import com.discussion.ryu.repository.DiscussionPostEsRepository;
 import com.discussion.ryu.repository.DiscussionPostRepository;
-import com.discussion.ryu.repository.DiscussionPostSearchRepositoryImpl;
+import com.discussion.ryu.repository.DiscussionPostRepositoryCustom;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -22,7 +23,8 @@ import org.springframework.transaction.annotation.Transactional;
 public class DiscussionPostService {
 
     private final DiscussionPostRepository discussionPostRepository;
-    private final DiscussionPostSearchRepositoryImpl discussionPostSearchRepository;
+    private final DiscussionPostEsRepository discussionPostEsRepository;
+    private final DiscussionPostRepositoryCustom discussionPostSearchRepository;
     private final OpinionService opinionService;
 
     @Transactional
@@ -37,6 +39,21 @@ public class DiscussionPostService {
                 .build();
 
         DiscussionPost savedPost = discussionPostRepository.save(discussionPost);
+
+        // ES 동기화
+        DiscussionPostDocument doc = DiscussionPostDocument.builder()
+                .id(savedPost.getId().toString())
+                .postId(savedPost.getId())
+                .title(savedPost.getTitle())
+                .content(savedPost.getContent())
+                .authorName(user.getName())
+                .agreeCount(0L)
+                .disagreeCount(0L)
+                .createdAt(savedPost.getCreatedAt())
+                .build();
+
+        discussionPostEsRepository.save(doc);
+
         return DiscussionPostResponse.from(savedPost);
     }
 
@@ -70,6 +87,20 @@ public class DiscussionPostService {
 
         discussionPost.updatePost(discussionPostUpdateDto.getTitle(), discussionPostUpdateDto.getContent());
         discussionPostRepository.save(discussionPost);
+
+        DiscussionPostDocument doc = DiscussionPostDocument.builder()
+                .id(postId.toString())
+                .postId(postId)
+                .title(discussionPost.getTitle())
+                .content(discussionPost.getContent())
+                .authorName(discussionPost.getAuthor().getName())
+                .agreeCount(discussionPost.getAgreeCount())
+                .disagreeCount(discussionPost.getDisagreeCount())
+                .createdAt(discussionPost.getCreatedAt())
+                .updatedAt(discussionPost.getUpdatedAt())
+                .build();
+        discussionPostEsRepository.save(doc);
+
         return DiscussionPostResponse.from(discussionPost);
     }
 
@@ -83,6 +114,7 @@ public class DiscussionPostService {
         }
 
         discussionPostRepository.delete(discussionPost);
+        discussionPostEsRepository.deleteById(postId.toString());
     }
 
     public Page<DiscussionPostResponse> searchPosts(DiscussionSearchDto searchDto, Pageable pageable) {
