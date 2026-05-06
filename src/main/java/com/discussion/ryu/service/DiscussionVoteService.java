@@ -2,11 +2,13 @@ package com.discussion.ryu.service;
 
 import com.discussion.ryu.dto.discussion.*;
 import com.discussion.ryu.entity.DiscussionPost;
+import com.discussion.ryu.entity.DiscussionPostDocument;
 import com.discussion.ryu.entity.DiscussionVote;
 import com.discussion.ryu.entity.User;
 import com.discussion.ryu.entity.VoteType;
 import com.discussion.ryu.exception.discussion.DiscussionPostNotFoundException;
 import com.discussion.ryu.exception.discussion.VoteNotFoundException;
+import com.discussion.ryu.repository.DiscussionPostEsRepository;
 import com.discussion.ryu.repository.DiscussionPostRepository;
 import com.discussion.ryu.repository.DiscussionVoteRepository;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +22,7 @@ import java.util.Optional;
 public class DiscussionVoteService {
 
     private final DiscussionPostRepository discussionPostRepository;
+    private final DiscussionPostEsRepository discussionPostEsRepository;
     private final DiscussionVoteRepository discussionVoteRepository;
 
     @Transactional
@@ -32,9 +35,13 @@ public class DiscussionVoteService {
         Optional<DiscussionVote> existingVote = discussionVoteRepository.findByUserAndDiscussionPost(user, discussionPost);
 
         if (existingVote.isPresent()) {
-            return changeVote(discussionPost, existingVote.get(), voteRequestDto.getVoteType());
+            VoteResponse response = changeVote(discussionPost, existingVote.get(), voteRequestDto.getVoteType());
+            syncEsVoteCount(discussionPost.getId());
+            return response;
         } else {
-            return createVote(discussionPost, user, voteRequestDto.getVoteType());
+            VoteResponse response = createVote(discussionPost, user, voteRequestDto.getVoteType());
+            syncEsVoteCount(discussionPost.getId());
+            return response;
         }
     }
 
@@ -103,6 +110,8 @@ public class DiscussionVoteService {
         } else {
             discussionPostRepository.decrementDisagreeCount(post.getId());
         }
+
+        syncEsVoteCount(post.getId());
     }
 
     /**
@@ -121,5 +130,29 @@ public class DiscussionVoteService {
         response.setAgreeCount(post.getAgreeCount());
         response.setDisagreeCount(post.getDisagreeCount());
         return response;
+    }
+
+    /**
+     * MySQL 최신 카운트를 ES에 동기화
+     * bulk update 쿼리 후 영속성 컨텍스트에 반영되지 않으므로 DB에서 재조회
+     */
+    private void syncEsVoteCount(Long postId) {
+        DiscussionPost post = discussionPostRepository.findById(postId)
+                .orElseThrow(() -> new DiscussionPostNotFoundException("존재하지 않는 토론글입니다."));
+
+        discussionPostEsRepository.findById(postId.toString()).ifPresent(doc -> {
+            DiscussionPostDocument updated = DiscussionPostDocument.builder()
+                    .id(doc.getId())
+                    .postId(doc.getPostId())
+                    .title(doc.getTitle())
+                    .content(doc.getContent())
+                    .authorName(doc.getAuthorName())
+                    .agreeCount(post.getAgreeCount())
+                    .disagreeCount(post.getDisagreeCount())
+                    .createdAt(doc.getCreatedAt())
+                    .updatedAt(doc.getUpdatedAt())
+                    .build();
+            discussionPostEsRepository.save(updated);
+        });
     }
 }

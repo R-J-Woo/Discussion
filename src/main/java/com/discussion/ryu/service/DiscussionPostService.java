@@ -10,11 +10,11 @@ import com.discussion.ryu.repository.DiscussionPostRepository;
 import com.discussion.ryu.repository.DiscussionPostRepositoryCustom;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
 
 
 @Service
@@ -58,9 +58,12 @@ public class DiscussionPostService {
     }
 
     public Page<DiscussionPostResponse> getAllPosts(SortType sortType, Pageable pageable) {
-        Pageable sortedPageable = createSortedPageable(sortType, pageable);
-        return discussionPostRepository.findAllWithAuthor(sortedPageable)
-                .map(DiscussionPostResponse::from);
+        DiscussionSearchDto searchDto = DiscussionSearchDto.builder()
+                .keyword(null)
+                .searchType(null)
+                .sortType(sortType)
+                .build();
+        return searchPosts(searchDto, pageable);
     }
 
     public DiscussionPostResponse getPost(Long postId, Pageable pageable) {
@@ -114,7 +117,23 @@ public class DiscussionPostService {
         }
 
         discussionPostRepository.delete(discussionPost);
-        discussionPostEsRepository.deleteById(postId.toString());
+
+        // ES 소프트 삭제 — deletedAt 세팅 후 저장 (mustNot exists 필터로 검색에서 제외됨)
+        discussionPostEsRepository.findById(postId.toString()).ifPresent(doc -> {
+            DiscussionPostDocument deleted = DiscussionPostDocument.builder()
+                    .id(doc.getId())
+                    .postId(doc.getPostId())
+                    .title(doc.getTitle())
+                    .content(doc.getContent())
+                    .authorName(doc.getAuthorName())
+                    .agreeCount(doc.getAgreeCount())
+                    .disagreeCount(doc.getDisagreeCount())
+                    .createdAt(doc.getCreatedAt())
+                    .updatedAt(doc.getUpdatedAt())
+                    .deletedAt(LocalDateTime.now())
+                    .build();
+            discussionPostEsRepository.save(deleted);
+        });
     }
 
     public Page<DiscussionPostResponse> searchPosts(DiscussionSearchDto searchDto, Pageable pageable) {
@@ -127,41 +146,4 @@ public class DiscussionPostService {
                 .map(DiscussionPostResponse::from);
     }
 
-    private Pageable createSortedPageable(SortType sortType, Pageable pageable) {
-        if (sortType == null) {
-            sortType = SortType.LATEST;
-        }
-
-        Sort sort = createSort(sortType);
-
-        return PageRequest.of(
-                pageable.getPageNumber(),
-                pageable.getPageSize(),
-                sort
-        );
-    }
-
-    private Sort createSort(SortType sortType) {
-        if (sortType == null) {
-            sortType = SortType.LATEST;
-        }
-
-        if (sortType == SortType.LATEST) {
-            // 최신순: 작성일 내림차순
-            return Sort.by(Sort.Direction.DESC, "createdAt");
-        } else if (sortType == SortType.POPULAR) {
-            // 인기순: 찬성+반대 합계 내림차순, 동점이면 최신순
-            return Sort.by(Sort.Direction.DESC, "agreeCount")
-                    .and(Sort.by(Sort.Direction.DESC, "disagreeCount"))
-                    .and(Sort.by(Sort.Direction.DESC, "createdAt"));
-        } else if (sortType == SortType.MOST_AGREED) {
-            // 찬성 많은 순: 찬성수 내림차순, 동점이면 최신순
-            return Sort.by(Sort.Direction.DESC, "agreeCount")
-                    .and(Sort.by(Sort.Direction.DESC, "createdAt"));
-        } else {
-            // 반대 많은 순: 반대수 내림차순, 동점이면 최신순
-            return Sort.by(Sort.Direction.DESC, "disagreeCount")
-                    .and(Sort.by(Sort.Direction.DESC, "createdAt"));
-        }
-    }
 }
